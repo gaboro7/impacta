@@ -1,0 +1,1452 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Facturaci&oacute;n</title>
+
+<link rel="shortcut icon" href="/favicon.gif" />
+<link type="text/css" href="/css/custom-theme/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+
+<script src="/js/jquery-1.6.2.min.js" type="text/javascript"></script>
+
+<script src="/js/jquery-ui-1.8.16.custom.min.js" type="text/javascript"></script>
+<script src="/js/jquery.ui.datepicker-es.js"></script>
+<script src="/js/jquery.ui.core.js"></script>
+<script src="/js/jquery.ui.widget.js"></script>
+<script src="/js/jquery.ui.position.js"></script>
+<script src="/js/jquery.ui.autocomplete.js"></script>
+<script src="/js/jquery.blockUI.js"></script>
+<script src="/js/jquery.impacta.v0.1.js" type="text/javascript"></script>
+<script src="/js/swfobject.js"></script>
+<script src="/js/jquery.tagsinput.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/jquery.tagsinput.css" />
+
+<script>
+
+    function reondeo(number){
+        return Math.round(number*100)/100;   // pele el + 0.4 para que trunque hacia arriba y redondee segun regla conocida
+    }
+
+    var conf_view_cli2 = 1;
+
+    var iFrames = new Array();
+    var inner_tab = null;
+    var tab_selected = null;
+    var opcion_actual = "mantenimiento";
+    var ventana_new = new Array();
+    ventana_new["articulo"] = {w:500,h:290};
+    ventana_new["promocion"] = {w:500,h:600};
+    ventana_new["impuesto"] = {w:500,h:250};
+    ventana_new["listaprecio"] = {w:500,h:330};
+    ventana_new["pagocontado"] = {w:500,h:290};
+    ventana_new["pagoacreditos"] = {w:700,h:290};
+    ventana_new["moneda"] = {w:500,h:220};
+    ventana_new["tipoclientes"] = {w:500,h:200};
+    ventana_new["empresa"] = {w:500,h:500};
+    ventana_new["persona"] = {w:500,h:600};
+    ventana_new["factura"] = {w:450,h:480};
+    ventana_new["recibo"] = {w:500,h:470};
+    ventana_new["contacto"] = {w:500,h:360};
+    ventana_new["telefono"] = {w:400,h:200};
+    ventana_new["mail_internos"] = {w:400,h:200};
+    ventana_new["notadecreditos"] = {w:400,h:350};
+    ventana_new["notadedebitos"] = {w:400,h:350};
+
+    var ventana_edit = new Array();
+    ventana_edit["articulo"] = {w:515,h:540};
+    ventana_edit["promocion"] = {w:500,h:600};
+    ventana_edit["impuesto"] = {w:500,h:290};
+    ventana_edit["listaprecio"] = {w:960,h:640};
+    ventana_edit["pagocontado"] = {w:500,h:290};
+    ventana_edit["pagoacreditos"] = {w:700,h:290};
+    ventana_edit["moneda"] = {w:500,h:220};
+    ventana_edit["tipoclientes"] = {w:500,h:380};
+    ventana_edit["empresa"] = {w:960,h:500};
+    ventana_edit["persona"] = {w:960,h:600};
+    ventana_edit["factura"] = {w:1200,h:700};
+    ventana_edit["recibo"] = {w:1100,h:630};
+    ventana_edit["contacto"] = {w:950,h:500};
+    ventana_edit["telefono"] = {w:400,h:200};
+    ventana_edit["mail_internos"] = {w:400,h:200};
+    ventana_edit["notadecreditos"] = {w:1200,h:700};
+    ventana_edit["notadedebitos"] = {w:1200,h:700};
+    ventana_edit["renglon_factura"] = {w:740,h:350};
+    ventana_edit["renglon_factdetalles"] = {w:400,h:400};
+    ventana_edit["renglon_recdetalles"] = {w:400,h:400};
+    ventana_edit["renglon_ndc_articulos"] = {w:740,h:350};
+    ventana_edit["renglon_notacreditos"] = {w:740,h:450};
+    ventana_edit["renglon_ndcdetalles"] = {w:400,h:400};
+    ventana_edit["precioarts"] = {w:400,h:200};
+    ventana_edit["renglon_ndddetalles"] = {w:400,h:500};
+    ventana_edit["renglon_recibo_docs"] = {w:400,h:300};
+    var reporte_cliente_id = -1;
+    var reporte_grupo_id = 0;
+    var reporte_sucursal_id = -1;
+    var reporte_tipo_busqueda = "grupo";
+    var tipo_reporte = "facturado";
+    $(document).ready(function() {
+
+        /*menu*/
+        $('#reporte_email').tagsInput({
+            // my parameters here
+            defaultText : "e-mail"
+        });
+        $('#reporte_email').importTags('');
+
+        $(".tipo_cliente_busqueda").click(function(){
+            switch($(this).attr("href"))
+            {
+                case "#tabs-1-reportes":
+                    reporte_tipo_busqueda = "grupo";
+                    reporte_grupo_id = 0;
+                    reporte_cliente_id = -1;
+                    reporte_sucursal_id =-1;
+                    break;
+                case "#tabs-2-reportes":
+                    reporte_tipo_busqueda = "empresa";
+                    reporte_grupo_id = -1;
+                    reporte_cliente_id = -1;
+                    reporte_sucursal_id =-1;
+                    break;
+            }
+        });
+
+        $(".tipo_de_reporte").click(function(){
+            switch($(this).attr("href"))
+            {
+                case "#tabs-contect-reportes":
+                    tipo_reporte = "facturado";
+                    $("#tab-tipo-busqueda-reportes").show();
+                    $("#tab-tipo-art-reportes").hide();
+                    break;
+                case "#tabs-contect-reportes2":
+                    tipo_reporte = "articulos_reporte";
+                    $("#tab-tipo-busqueda-reportes").show();
+                    $("#tab-tipo-art-reportes").hide();
+                    break;
+                case "#tabs-contect-reportes3":
+                    tipo_reporte = "movimientos";
+                    $("#tab-tipo-busqueda-reportes").show();
+                    $("#tab-tipo-art-reportes").hide();
+                    break;
+                case "#tabs-contect-reportes4":
+                    tipo_reporte = "conjunto_articulos_reporte";
+                    $("#tab-tipo-art-reportes").show();
+                    $("#tab-tipo-busqueda-reportes").hide();
+                    break;
+            }
+
+        });
+
+        $( "#vencidas").click(function(){
+            if ($(this).attr("checked") ){
+                $( "#pendientes").attr('checked',true);
+            }
+            else
+            {
+                $( "#pendientes").attr('checked',false);
+            }
+            $( "#pendientes").button( "refresh" );
+        });
+
+        $( "#pendientes").click(function(){
+            if ( ! $(this).attr("checked") ){
+                $( "#vencidas").attr('checked',false);
+                $( "#vencidas").button( "refresh" );
+            }
+        });
+
+
+        var dates = $( "#reporte_inicio, #reporte_cierre" ).datepicker({
+            changeMonth: true,
+            changeYear: true,
+            onSelect: function( selectedDate ) {
+                var option = this.id == "reporte_inicio" ? "minDate" : "maxDate",
+                        instance = $( this ).data( "datepicker" ),
+                        date = $.datepicker.parseDate(
+                                instance.settings.dateFormat ||
+                                        $.datepicker._defaults.dateFormat,
+                                selectedDate, instance.settings );
+                dates.not( this ).datepicker( "option", option, date );
+            }
+        });
+        $( "#reporte_inicio" ).datepicker( "option", "dateFormat","yy-mm-dd" );
+        $( "#reporte_cierre" ).datepicker( "option", "dateFormat","yy-mm-dd" );
+        $( "#radio_tipo_factura1").attr('checked',true);
+        $( "#radio_tipo_factura2").attr('checked',true);
+        $( "#radio_tipo_factura3").attr('checked',true);
+        $( "#radio_tipo_factura4").attr('checked',true);
+        $( "#radio_tipo_factura5").attr('checked',true);
+        $( "#radio_tipo_factura6").attr('checked',true);
+        $( "#anulada").attr('checked',true);
+        $( "#pendientes").attr('checked',false);
+        $( "#vencidas").attr('checked',false);
+
+        $( "#radio_tipo_factura" ).buttonset();
+        $( "#estado_factura" ).buttonset();
+        $( "#estado_documentos" ).buttonset();
+        $( "#crear_reporte").button({ icons: { primary: "ui-icon-disk" }});
+
+        $("#crear_reporte").click(function(){
+
+            var reporte_fecha_inicio = $( "#reporte_inicio").val();
+            var reporte_fecha_fin = $( "#reporte_cierre").val();
+            var email = ($( "#reporte_email").val() == "")?"":"&email="+$( "#reporte_email").val();
+            var subject = ($( "#reporte_subject").val() == "")?"":"&subject="+$( "#reporte_subject").val();
+            var message = ($( "#reporte_menssage").val() == "")?"":"&message="+$( "#reporte_menssage").val();
+            var empsuc = ( $("#empresa_rep_ca").attr('checked') == "checked")?"emp":"suc";
+
+            if (tipo_reporte == "conjunto_articulos_reporte"){
+
+                var comercializable_ids_rep = new Array();
+                var arr = $('#agregar_productos_rep').val().split(",");
+                if ($('#agregar_productos_rep').val() != ""){
+                    for (var i in arr){
+                        comercializable_ids_rep.push(arr[i].match(/<[0-9]+>/g)[0].match(/[0-9]+/g)[0]);
+                    }
+                }
+
+                var cliente_ids_rep = new Array();
+                arr = $('#agregar_cliente_rep_art').val().split(",");
+                if ($('#agregar_cliente_rep_art').val() != ""){
+                    for (var i in arr){
+                        cliente_ids_rep.push(arr[i].match(/<[0-9]+>/g)[0].match(/[0-9]+/g)[0]);
+                    }
+                }
+
+                var mostrar_alerta = false;
+                if( $('#agregar_productos_rep').val() == ""){
+                    $( "#dialog-confirm" ).html("No ha elegido un conjunto de artículos. Esta seguro que quiere crear el reporte para todos los artículos?");
+                    mostrar_alerta = false; // era true pero lo cambie pa que no me salte el cartel en pruebas
+                }
+
+                if (mostrar_alerta){
+                    $( "#dialog-confirm" ).dialog({
+                        resizable: false,
+                        height:160,
+                        modal: true,
+                        buttons: {
+                            "Crear Reporte": function() {
+                                crearreporte();
+                                $( this ).dialog( "close" );
+
+                            },
+                            "Cancelar": function() {
+                                $( this ).dialog( "close" );
+                            }
+                        }
+                    });
+                }else{
+                    crearreporte()
+                }
+            }else{
+                var es_factura_reporte = ($( "#radio_tipo_factura1").is(':checked'))?"true":"false";
+                var es_recivo_reporte  = ($( "#radio_tipo_factura2").is(':checked'))?"true":"false";
+                var es_ndcs = ($( "#radio_tipo_factura3").is(':checked'))?"true":"false";
+                var es_ndds = ($( "#radio_tipo_factura4").is(':checked'))?"true":"false";
+                var es_ndvs = ($( "#radio_tipo_factura5").is(':checked'))?"true":"false";
+                var es_facturaC = ($( "#radio_tipo_factura6").is(':checked'))?"true":"false";
+                var es_vencida = ($( "#vencidas").is(':checked'))?"true":"false";
+                var es_pendiente = ($( "#pendientes").is(':checked'))?"true":"false";
+                var anulada_reporte = ($( "#anulada").is(':checked'))?"true":"false";
+                var insucursal = 0;
+                if (reporte_grupo_id != -1){
+                    if(  $("#discriminar_por_cliente").attr('checked') == "checked"){
+                        if ( $("#discriminar_por_cliente_y_sucursal").attr('checked') == "checked")
+                            reporte_sucursal_id = 0;
+                        else
+                            reporte_sucursal_id = -1;
+                        reporte_cliente_id = 0 ;
+                    }else{
+                        reporte_cliente_id = -1 ;
+                        reporte_sucursal_id = -1;
+                    }
+                    if (  $("#agregar_sucursal_cliente").attr('checked') == "checked")
+                        insucursal = 1;
+                } else {
+                    if(reporte_cliente_id > 0){
+                        if (reporte_sucursal_id == -1 && $("#discriminar_por_sucursal").attr('checked') == "checked"){
+                            reporte_sucursal_id = 0;
+
+                        }
+                    }else{
+                        if( $("#discriminar_por_cliente_sucursal").attr('checked') == "checked"){
+                            reporte_cliente_id = 0;
+                        } else{
+                            reporte_cliente_id = -1;
+                        }
+                        if($("#discriminar_por_sucursal").attr('checked') == "checked"){
+                            reporte_sucursal_id = 0;
+
+                        }else{
+                            reporte_sucursal_id = -1;
+                        }
+                    }
+                    if ( $("#agregar_por_sucursal").attr('checked') == "checked")
+                        insucursal = 1;
+                }
+                var moneda_ids = new Array();
+                $(".moneda:checked").each(function(){
+
+                    moneda_ids.push(parseInt($(this).attr("data")));
+
+                });
+                var  monedas = "&monedas=" + moneda_ids;
+                var mostrar_alerta = false;
+                if(reporte_grupo_id ==-1 && reporte_cliente_id == -1){
+                    $( "#dialog-confirm" ).html("No ha elegido un cliente. Esta seguro que quiere crear el reporte para todos los clientes?");
+                    mostrar_alerta = true;
+                }
+
+                if(reporte_grupo_id == 0 && reporte_cliente_id == 0){
+                    $( "#dialog-confirm" ).html("No ha elegido un grupo. Esta seguro que quiere crear el reporte para todos los grupos?");
+                    mostrar_alerta = true;
+                }
+                if (mostrar_alerta){
+                    $( "#dialog-confirm" ).dialog({
+                        resizable: false,
+                        height:160,
+                        modal: true,
+                        buttons: {
+                            "Crear Reporte": function() {
+                                crearreporte();
+                                $( this ).dialog( "close" );
+
+                            },
+                            "Cancelar": function() {
+                                $( this ).dialog( "close" );
+                            }
+                        }
+                    });
+                }else{
+                    crearreporte()
+
+                }
+            }
+
+            function crearreporte(){
+                //  data['pagocontado[moneda_ids][]'] =	moneda_ids;  comercializable_ids_rep    cliente_ids_rep
+
+                if (tipo_reporte == "conjunto_articulos_reporte"){
+                    if ($( "#reporte_email").val() == "" ){
+                        console.log('reportes/'+tipo_reporte+'.xlsx?inicio='+reporte_fecha_inicio+'&fin='+reporte_fecha_fin+
+                                email+subject+message+"&comercializable_ids_rep="+comercializable_ids_rep+"&cliente_ids_rep="+cliente_ids_rep+"&empsuc="+empsuc);
+
+                        window.open('reportes/'+tipo_reporte+'.xlsx?inicio='+reporte_fecha_inicio+'&fin='+reporte_fecha_fin+
+                                email+subject+message+"&comercializable_ids_rep="+comercializable_ids_rep+"&cliente_ids_rep="+cliente_ids_rep+"&empsuc="+empsuc);
+
+                    }else{
+                        $.blockUI({ message: '<h1><img src="busy.gif" /> Espere un momento...</h1>' });
+                        $.ajax({
+                            url: 'reportes/'+tipo_reporte+'.json?inicio='+reporte_fecha_inicio+'&fin='+reporte_fecha_fin+
+                                    email+subject+message+"&comercializable_ids_rep="+comercializable_ids_rep+"&cliente_ids_rep="+cliente_ids_rep,
+                            context: document.body,
+                            success: function(data){
+
+                                if(data[0].envio)
+                                    alert(data[0].envio);
+                                else
+                                    alert("e-mails enviado correctamente");
+                                $.unblockUI();
+                            },
+                            error: function( xhr, status, index, anchor ) {
+                                $.unblockUI();
+                            }
+                        });
+
+                    }
+                }else{
+                    if ($( "#reporte_email").val() == "" ){
+                        window.open('reportes/'+tipo_reporte+'.xlsx?cliente_id='+reporte_cliente_id+'&grupo_id='+reporte_grupo_id+'&sucursal_id='+reporte_sucursal_id+'&inicio='+reporte_fecha_inicio+'&fin='+reporte_fecha_fin+
+                                '&facturas='+es_factura_reporte+'&credito='+es_facturaC+'&recibos='+es_recivo_reporte+'&ndcs='+es_ndcs+'&ndvs='+es_ndvs+'&ndds='+es_ndds+'&anuladas='+anulada_reporte+'&insucursal='+insucursal+'&vencidas='+es_vencida+'&pendientes='+es_pendiente   + monedas
+                                +email+subject+message);
+
+                    }else{
+                        $.blockUI({ message: '<h1><img src="busy.gif" /> Espere un momento...</h1>' });
+                        $.ajax({
+                            url: 'reportes/'+tipo_reporte+'.json?cliente_id='+reporte_cliente_id+'&grupo_id='+reporte_grupo_id+'&sucursal_id='+reporte_sucursal_id+'&inicio='+reporte_fecha_inicio+'&fin='+reporte_fecha_fin+
+                                    '&facturas='+es_factura_reporte+'&credito='+es_facturaC+'&recibos='+es_recivo_reporte+'&ndcs='+es_ndcs+'&ndvs='+es_ndvs+'&ndds='+es_ndds+'&anuladas='+anulada_reporte+'&insucursal='+insucursal+'&vencidas='+es_vencida+'&pendientes='+es_pendiente   + monedas
+                                    +email+subject+message,
+                            context: document.body,
+                            success: function(data){
+
+                                if(data[0].envio)
+                                    alert(data[0].envio);
+                                else
+                                    alert("e-mails enviado correctamente");
+                                $.unblockUI();
+                            },
+                            error: function( xhr, status, index, anchor ) {
+                                $.unblockUI();
+                            }
+                        });
+
+                    }
+                }
+
+            }
+
+        });
+
+        $( ".filtro_reportes" ).keyup(function(e){
+            if((e.keyCode >= 48 && e.keyCode <= 90)||(e.keyCode >= 96 && e.keyCode <= 105) || (e.keyCode == 32)){
+                $("#bonton_mostrar").show();
+                $("#bonton_discriminar").show();
+                $("#bonton_discriminat_cli").show();
+                reporte_cliente_id = -1;
+                reporte_sucursal_id =  -1;
+                reporte_grupo_id = -1 ;
+                $("#msg_filtro_reportes").html("Todos los Clientes");
+            }
+        });
+
+        $( ".filtro_reportes" ).autocomplete({
+
+            source: function( request, response ) {
+                var tipo = "&tipo=";
+                if (reporte_tipo_busqueda == "empresa"){
+                    tipo = "";
+                }else{
+                    tipo += reporte_tipo_busqueda;
+                }
+                $.ajax({
+                    url: "empresas.json?filtro="+request.term+tipo,
+                    success: function( data ) {
+
+                        switch(reporte_tipo_busqueda)
+                        {
+                            case "grupo":
+
+                                data = data.grupos
+                                break;
+                            case "empresa":
+
+                                if(data.empresas.length == 0 && data.sucursales.length == 0 &&  data.personas.length == 0){
+                                    data = [{
+                                        id :-1
+                                    }];
+                                }else{
+
+                                    var aux = new Array();
+                                    data = aux.concat(data.empresas,data.sucursales,data.personas);
+
+                                }
+                                break;
+                            case "sucursal":
+                                data = data.sucursal
+                                break;
+                        }
+
+                        if(data.length == 0){
+                            data = [{
+                                id :-1
+                            }];
+                        }
+                        response( $.map( data, function( item ) {
+                            if (reporte_tipo_busqueda != "empresa"){
+                                if (item.id == -1){
+                                    return {
+                                        label: "no se encotraron resultados" ,
+                                        value: request.term,
+                                        id :item.id
+                                    }
+                                }else{
+                                    return {
+                                        label: item.nombre ,
+                                        value: item.nombre,
+                                        id :item.id,
+                                        data: item
+                                    }
+                                }
+                            }else{
+                                if (item.id == -1){
+                                    return {
+                                        label: "no se encotraron resultados" ,
+                                        value: request.term,
+                                        id :item.id
+                                    }
+                                }else{
+                                    if (item.empresa){
+                                        return {
+                                            label: "<" + item.id + ">" + item.nombre + " ["+ item.empresa.nombre+"]" ,
+                                            value: "<" + item.id + ">" + item.nombre + " ["+ item.empresa.nombre+"]",
+                                            id: item.empresa.id,
+                                            sucursal_id : item.id,
+                                            domicilio : item.domicilio,
+                                            nombre_empresa :item.empresa.nombre,
+                                            nombre_suc: item.nombre,
+                                            rut : item.empresa.nif,
+                                            data: item
+
+                                        }
+                                    }else{
+                                        return {
+                                            label: "<" + item.id + ">" + item.nombre ,
+                                            value: "<" + item.id + ">" + item.nombre,
+                                            id :item.id,
+                                            sucursal_id : -1,
+                                            domicilio : item.domicilio,
+                                            nombre_empresa :item.nombre,
+                                            nombre_suc: item.nombre,
+                                            rut : item.nif,
+                                            data: item
+
+                                        }
+                                    }
+                                }
+                            }
+                        })
+                        );
+                    },
+                    error: function( xhr, status, index, anchor ) {
+                        return {
+                            label: 'no se econtro reultado' ,
+                            value: request.term,
+                            id :-1
+                        }
+                    }
+                });
+            },
+            minLength: 1,
+            select: function( event, ui ) {
+                if(ui.item.id != -1){
+                    switch(reporte_tipo_busqueda)
+                    {
+                        case "grupo":
+                            reporte_cliente_id =-1;
+                            reporte_grupo_id =  ui.item.id ;
+                            reporte_sucursal_id =  -1;
+                            $('#reporte_email').importTags('');
+                            for (var i in ui.item.data.mail_internos){
+                                $('#reporte_email').addTag(ui.item.data.mail_internos[i].mail);
+                            }
+
+                            break;
+                        case "empresa":
+                            $("#bonton_mostrar").show();
+                            $("#bonton_discriminar").show();
+                            $("#bonton_discriminat_cli").show();
+                            reporte_cliente_id = ui.item.id;
+                            reporte_sucursal_id =  ui.item.sucursal_id;
+                            reporte_grupo_id = -1 ;
+                            if (reporte_sucursal_id == -1){
+                                $("#msg_filtro_reportes").html("Cliente:" +ui.item.id + "-" + ui.item.nombre_empresa)
+                            }else{
+                                $("#msg_filtro_reportes").html("Sucursal:" + ui.item.sucursal_id +"-"+ ui.item.nombre_suc + " | Cliente:" +ui.item.id + "-" + ui.item.nombre_empresa)
+                            }
+                            setTimeout(
+                                    function(){
+                                        $( ".filtro_reportes" ).val("");
+                                    },100);
+                            $('#reporte_email').importTags('');
+                            for (var i in ui.item.data.mail_internos){
+                                $('#reporte_email').addTag(ui.item.data.mail_internos[i].mail);
+                            }
+                            if(reporte_sucursal_id != -1){
+                                $("#bonton_mostrar").hide();
+                                $("#bonton_discriminar").hide();
+                                $("#bonton_discriminat_cli").hide();
+                            }
+                            if (reporte_cliente_id != -1){
+                                $("#bonton_discriminat_cli").hide();
+                            }
+
+                            break;
+                        case "sucursal":
+                            $("#bonton_mostrar").show();
+                            reporte_cliente_id = -1;
+                            reporte_sucursal_id =  ui.item.id;
+                            reporte_grupo_id =  -1 ;
+                            $('#reporte_email').importTags('');
+                            for (var i in ui.item.data.mail_internos){
+                                $('#reporte_email').addTag(ui.item.data.mail_internos[i].mail);
+                            }
+                            break;
+                    }
+
+                }
+                //    showIframe("/empresas/"+ui.item.id+"/edit","Editar Empresa",960,600);
+
+            },
+            open: function() {
+                $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+            },
+            close: function() {
+                $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+            }
+        });
+
+
+        $( "#ocultar" ).button({
+            text: false,
+            icons: {
+                primary: "ui-icon-circle-arrow-w"
+            }
+        });
+        $("#tab-tipo-busqueda-reportes").tabs( );
+        $("#default_cliente").click();
+        $("#default_tab3art").click();
+        $("#tab-tipo-reportes").tabs();
+        $("#tab-tipo-art-reportes").tabs( );
+        $("#tab-tipo-busqueda-reportes").show();
+        $("#tab-tipo-art-reportes").hide();
+
+
+        $( "#ocultar" ).click(function(){
+            $( "#check1" ).button('disable');
+            $( "#check2" ).button('disable');
+            $( "#check3" ).button('disable');
+            $( "#singout" ).button('disable');
+            $( "#ocultar" ).button('disable');
+            if($("#contenedor_menu").css("left") == '5px'){
+
+                $( "#contenedor_menu" ).animate({
+                    left: '-=200'
+                }, 300, function() {});
+                $( this ).animate({
+                    left: '+=188'
+                }, 300, function() {});
+                $(".tabs" ).animate({
+                    left: '-=200',
+                    width: '+=200'
+                }, 300, function() {
+
+                    $( "#ocultar" ).button('enable');
+                });
+                $( "#ocultar" ).button({
+                    text: false,
+                    icons: {
+                        primary: "ui-icon-circle-arrow-e"
+                    }
+                });
+            }else{
+                $( "#contenedor_menu" ).animate({
+                    left: '+=200'
+                }, 300, function() {});
+                $( this ).animate({
+                    left: '-=188'
+                }, 300, function() {});
+                $(".tabs" ).animate({
+                    left: '+=200',
+                    width: '-=200'
+                }, 300, function() {
+                    $( "#check1" ).button('enable');
+                    $( "#check2" ).button('enable');
+                    $( "#check3" ).button('enable');
+                    $( "#ocultar" ).button('enable');
+                    $( "#singout" ).button('enable');
+                });
+
+
+                $( "#ocultar" ).button({
+                    text: false,
+                    icons: {
+                        primary: "ui-icon-circle-arrow-w"
+                    }
+                });
+
+
+            }
+        })
+
+
+
+        $( "#check1" ).attr('checked',true);
+        $( "#check2" ).attr('checked',false);
+        $( "#check3" ).attr('checked',false);
+        $( "#check1" ).button();
+        $( "#check2" ).button();
+        $( "#check3" ).button();
+        $( "#singout" ).button();
+        $( "#check1" ).button('enable');
+        $( "#check2" ).button('enable');
+        $( "#check3" ).button('enable');
+        $( "#singout" ).button('enable');
+
+
+        $( "#check1" ).click(function(){
+            if ($(this).attr("checked")){
+                $( "#check2" ).attr('checked',false);
+                $( "#check2" ).button( "refresh" );
+                $( "#check3" ).attr('checked',false);
+                $( "#check3" ).button( "refresh" );
+                $( "#"+opcion_actual ).effect( 'fold', {},500, function(){
+
+                    opcion_actual =  "mantenimiento";
+                    $( "#mantenimiento" ).removeAttr( "style" ).hide().fadeIn();
+
+                } );
+            }else{
+                $( this ).attr('checked',true);
+                $( this ).button( "refresh" );
+
+            }
+        });
+        $( "#check2" ).click(function(){
+            if ($(this).attr("checked")){
+                $( "#check1" ).attr('checked',false);
+                $( "#check1" ).button( "refresh" );
+                $( "#check3" ).attr('checked',false);
+                $( "#check3" ).button( "refresh" );
+                $( "#"+opcion_actual ).effect( 'fold', {}, 500, function(){
+                    opcion_actual =  "facturacion";
+                    $( "#facturacion" ).removeAttr( "style" ).hide().fadeIn();
+                } );
+            }else{
+                $( this ).attr('checked',true);
+                $( this ).button( "refresh" );
+            }
+        });
+        $( "#check3" ).click(function(){
+            if ($(this).attr("checked")){
+                $( "#check1" ).attr('checked',false);
+                $( "#check1" ).button( "refresh" );
+                $( "#check2" ).attr('checked',false);
+                $( "#check2" ).button( "refresh" );
+                $( "#"+opcion_actual ).effect( 'fold', {}, 500, function(){
+                    opcion_actual =  "reportes";
+                    $( "#reportes" ).removeAttr( "style" ).hide().fadeIn();
+                } );
+            }else{
+                $( this ).attr('checked',true);
+                $( this ).button( "refresh" );
+            }
+        });
+
+        $.datepicker.setDefaults( $.datepicker.regional[ "es" ] );
+        tab_selected = $( $( ".listar" ).get(0));
+        $( ".tabs" ).tabs();
+
+        $(".listar").click(function() {
+            $( "#tabs-contect-mantenimiento" ).html('');
+            $( "#tabs-contect-facturacion" ).html('');
+            $( "#tabs-contect-"+opcion_actual ).html('<p align ="center"><img  src="/images/ajax-loader.gif" /></p>');
+            tab_selected = $(this);
+            $.ajax({
+                url: $(this).attr("url"),
+                context: document.body,
+                success: function(data){
+                    $("#tabs-contect-"+opcion_actual ).html(data);
+                },
+                error: function( xhr, status, index, anchor ) {
+                    $( "#tabs-contect-"+opcion_actual ).html(
+                            "No se pudo cargar el listado intenta mas tarde" );
+                }
+            });
+        });
+
+
+        $('#agregar_productos_rep').tagsInput({
+            // my parameters here
+            defaultText : " "
+        });
+
+        $( "#comercializable_rep_id" ).autocomplete({
+            source: function( request, response ) {
+                var search = request.term;
+                if(request.term == "no search")
+                    search = "";
+                var url = "/articuloinds.json?comercializable="+search;
+                $.ajax({
+                    url: url,
+                    success: function( data ) {
+
+                        if(data.length == 0){
+                            data = [{
+                                id :-1,
+                                texto: "no se encontraron resultados"
+                            }];
+                        }
+                        response( $.map( data, function( item ) {
+                            if (item.id == -1){
+                                return {
+                                    label: "no se encotraron resultados",
+                                    value: request.term,
+                                    id :item.id
+                                }
+                            }else{
+                                return {
+                                    label: "<" + item.id + ">" + item.nombre,
+                                    value:  item.nombre,
+                                    id :item.id,
+                                    complete_data : item
+                                }
+                            }
+                        })
+                        );
+                    },
+                    error: function( xhr, status, index, anchor ) {
+                        return {
+                            label: 'no se econtro reultado',
+                            value: request.term,
+                            id :-1
+                        }
+                    }
+                });
+            },
+            minLength: 1,
+            select: function( event, ui ) {
+
+                if(ui.item.id != -1){
+                    //var arr = $('#agregar_productos_rep').val().split(",");
+                    //if (jQuery.inArray("<"+ui.item.id+">" + ui.item.value, arr) < 0)
+                    if (!$('#agregar_productos_rep').tagExist("<"+ui.item.id+">" + ui.item.value))
+                        $('#agregar_productos_rep').addTag("<"+ui.item.id+">" + ui.item.value);
+                }
+                var t2=setTimeout(function(){$( "#comercializable_rep_id" ).val("");},300)
+
+                // showIframe("/articuloinds/"+ui.item.id+"/edit","Editar Articulo",500,500);
+            },
+            open: function() {
+                $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+            },
+            close: function() {
+                $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+            }
+        });
+
+        $('#agregar_cliente_rep_art').tagsInput({
+            // my parameters here
+            defaultText : " "
+        });
+
+        $( "#cliente_rep_id" ).autocomplete({
+            source: function( request, response ) {
+
+                $.ajax({
+                    url: "empresas.json?filtro="+request.term,
+                    success: function( data ) {
+
+                        if(data.empresas.length == 0 && data.sucursales.length == 0 &&  data.personas.length == 0){
+                            data = [{
+                                id :-1
+                            }];
+                        }else{
+
+                            var aux = new Array();
+                            data = aux.concat(data.empresas,data.sucursales,data.personas);
+
+                        }
+                        response( $.map( data, function( item ) {
+
+                            if (item.id == -1){
+                                return {
+                                    label: "no se encotraron resultados" ,
+                                    value: request.term,
+                                    id :item.id
+                                }
+                            }else{
+                                //console.log(item)
+                                if (item.empresa){
+
+                                    if (conf_view_cli2 == 0){
+                                        return {
+                                            label: "<" + item.id + ">" + item.nombre + " ["+ item.empresa.nombre+"]" ,
+                                            value: "<" + item.id + ">" + item.nombre + " ["+ item.empresa.nombre+"]",
+                                            id: item.empresa.id,
+                                            sucursal_id : item.id,
+                                            domicilio : item.domicilio,
+                                            nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                                            rut : item.empresa.nif,
+                                            tipo : item.tipo
+
+                                        }
+                                    }else{
+                                        if (  $("#empresa_rep_ca").attr('checked') != "checked"){
+                                            return {
+                                                label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                                                value: item.nombre,
+                                                id: item.empresa.id,
+                                                sucursal_id : item.id,
+                                                domicilio : item.domicilio,
+                                                nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                                                rut : item.empresa.nif,
+                                                tipo : item.tipo
+
+                                            }
+                                        }
+                                    }
+                                }else{
+                                    if (conf_view_cli2 == 0){
+                                        return {
+                                            label: "<" + item.id + ">" + item.nombre ,
+                                            value: "<" + item.id + ">" + item.nombre,
+                                            id :item.id,
+                                            sucursal_id : -1,
+                                            domicilio : item.domicilio,
+                                            nombre :item.nombre,
+                                            rut : item.nif,
+                                            tipo : item.tipo
+
+                                        }
+                                    }else{
+                                        if(item.tipo == "Persona"){
+                                            return {
+                                                label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"] Persona física",
+                                                value: item.nombre,
+                                                id :item.id,
+                                                sucursal_id : -1,
+                                                domicilio : item.domicilio,
+                                                nombre :item.nombre,
+                                                rut : item.nif,
+                                                tipo : item.tipo
+
+                                            }
+                                        }else{
+                                            return {
+                                                label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"] Casa central",
+                                                value: item.nombre,
+                                                id :item.id,
+                                                sucursal_id : -1,
+                                                domicilio : item.domicilio,
+                                                nombre :item.nombre,
+                                                rut : item.nif,
+                                                tipo : item.tipo
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        })
+                        );
+                    },
+                    error: function( xhr, status, index, anchor ) {
+                        return {
+                            label: 'no se econtro reultado' ,
+                            value: request.term,
+                            id :-1
+                        }
+                    }
+                });
+            },
+            minLength: 1,
+            select: function( event, ui ) {
+
+                var clids = new Array();
+                var arrg = $('#agregar_cliente_rep_art').val().split(",");
+                for(var ij in arrg){
+                    clids.push();
+                }
+
+                if(ui.item.id != -1){
+                    //var arr = $('#agregar_cliente_rep_art').val().split(",");
+                    if (ui.item.tipo == "Sucursal"){
+                        //if (jQuery.inArray("<"+ui.item.sucursal_id+">"+ui.item.value, arr) < 0)
+                        if (!$('#agregar_cliente_rep_art').tagExist("<"+ui.item.sucursal_id+">"+ui.item.value))
+                            $('#agregar_cliente_rep_art').addTag("<"+ui.item.sucursal_id+">"+ui.item.value);
+                    }else{
+                        //if (jQuery.inArray("<"+ui.item.id+">"+ui.item.value, arr) < 0)
+                        if (!$('#agregar_cliente_rep_art').tagExist("<"+ui.item.id+">"+ui.item.value))
+                            $('#agregar_cliente_rep_art').addTag("<"+ui.item.id+">"+ui.item.value);
+                    }
+                }
+                var t3=setTimeout(function(){$( "#cliente_rep_id" ).val("");},300)
+            },
+            open: function() {
+                $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+            },
+            close: function() {
+                $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+            }
+        });
+
+    });
+    function reloadIframe(data,tab){
+        data = data.split(" ").join("");
+        inner_tab = tab;
+        var dialog = iFrames[data];
+        dialog.dialog( "disable" );
+        $.ajax({
+            url: data,
+            context: document.body,
+            success: function(html_data){
+
+                dialog.html(html_data);
+                dialog.dialog({ position: 'top' });
+                dialog.dialog( "enable" );
+            },
+            error: function( xhr, status, index, anchor ) {
+                dialog.html(
+                        "No se pudo cargar el formulario intenta mas tarde" );
+            }
+        });
+    }
+
+    function closeIframe(data){
+        data = data.split(" ").join("");
+        var dialog = iFrames[data];
+        dialog.dialog( "close" );
+        dialog.html("");
+        dialog.remove();
+    }
+
+    function showIframe(data,title1,width,height){
+        data = data.split(" ").join("");
+        var array_accion = (data.search('/edit')==-1)? ventana_new:ventana_edit;
+
+        for(var i in array_accion){
+            if (data.search(i)>0){
+
+                width = array_accion[i].w;
+                height= array_accion[i].h;
+            }
+        }
+
+        var dialog = $("<div></div>");
+        $("body").append(dialog);
+        dialog.dialog({
+            autoOpen: false,
+            width: 600,
+            modal: true,
+            show: "blind",
+            hide: "explode"
+        });
+        iFrames[data] = dialog;
+        dialog.html('<p align ="center"><img  src="/images/ajax-loader.gif" /></p>');
+        dialog.dialog({ title: title1 });
+        dialog.dialog({ position: 'top' });
+        dialog.dialog('open');
+        dialog.dialog({height: height});
+        dialog.dialog({width: width});
+        dialog.bind( "dialogclose", function(event, ui) {
+            dialog.html("");
+            dialog.remove();
+        });
+        //     dialog. dialog({ resizable: false });
+        $.ajax({
+            url: data,
+            context: document.body,
+            success: function(html_data){
+
+                dialog.html(html_data);
+                dialog.dialog({ position: 'top' });
+            },
+            error: function( xhr, status, index, anchor ) {
+                dialog.html(
+                        "No se pudo cargar el formulario intenta mas tarde" );
+            }
+        });
+
+
+        return false;
+    }
+
+</script>
+
+<style type="text/css">
+    .digg_pagination {
+        background: white;
+        cursor: default;
+        /* self-clearing method: */ }
+    .digg_pagination a, .digg_pagination span, .digg_pagination em {
+        padding: 0.2em 0.5em;
+        display: block;
+        float: left;
+        margin-right: 1px; }
+    .digg_pagination .disabled {
+        color: #999999;
+        border: 1px solid #dddddd; }
+    .digg_pagination .current {
+        font-style: normal;
+        font-weight: bold;
+        background: #2e6ab1;
+        color: white;
+        border: 1px solid #2e6ab1; }
+    .digg_pagination a {
+        text-decoration: none;
+        color: #105cb6;
+        border: 1px solid #9aafe5; }
+    .digg_pagination a:hover, .digg_pagination a:focus {
+        color: #000033;
+        border-color: #000033; }
+    .digg_pagination .page_info {
+        background: #2e6ab1;
+        color: white;
+        padding: 0.4em 0.6em;
+        width: 22em;
+        margin-bottom: 0.3em;
+        text-align: center; }
+    .digg_pagination .page_info b {
+        color: #000033;
+        background: #6aa6ed;
+        padding: 0.1em 0.25em; }
+    .digg_pagination:after {
+        content: ".";
+        display: block;
+        height: 0;
+        clear: both;
+        visibility: hidden; }
+    * html .digg_pagination {
+        height: 1%; }
+    *:first-child + html .digg_pagination {
+        overflow: hidden; }
+
+    .apple_pagination {
+        background: #f1f1f1;
+        border: 1px solid #e5e5e5;
+        text-align: center;
+        padding: 1em;
+        cursor: default; }
+    .apple_pagination a, .apple_pagination span {
+        padding: 0.2em 0.3em; }
+    .apple_pagination .disabled {
+        color: #aaaaaa; }
+    .apple_pagination .current {
+        font-style: normal;
+        font-weight: bold;
+        background-color: #bebebe;
+        display: inline-block;
+        width: 1.4em;
+        height: 1.4em;
+        line-height: 1.5;
+        -moz-border-radius: 1em;
+        -webkit-border-radius: 1em;
+        border-radius: 1em;
+        text-shadow: rgba(255, 255, 255, 0.8) 1px 1px 1px; }
+    .apple_pagination a {
+        text-decoration: none;
+        color: black; }
+    .apple_pagination a:hover, .apple_pagination a:focus {
+        text-decoration: underline; }
+
+    .flickr_pagination {
+        text-align: center;
+        padding: 0.3em;
+        cursor: default; }
+    .flickr_pagination a, .flickr_pagination span, .flickr_pagination em {
+        padding: 0.2em 0.5em; }
+    .flickr_pagination .disabled {
+        color: #aaaaaa; }
+    .flickr_pagination .current {
+        font-style: normal;
+        font-weight: bold;
+        color: #ff0084; }
+    .flickr_pagination a {
+        border: 1px solid #dddddd;
+        color: #0063dc;
+        text-decoration: none; }
+    .flickr_pagination a:hover, .flickr_pagination a:focus {
+        border-color: #003366;
+        background: #0063dc;
+        color: white; }
+    .flickr_pagination .page_info {
+        color: #aaaaaa;
+        padding-top: 0.8em; }
+    .flickr_pagination .previous_page, .flickr_pagination .next_page {
+        border-width: 2px; }
+    .flickr_pagination .previous_page {
+        margin-right: 1em; }
+    .flickr_pagination .next_page {
+        margin-left: 1em; }
+
+        /*demo page css
+body{ font: 70.5% "Trebuchet MS", sans-serif; margin: 50px;
+    background: url("/images/IMG_14032011_234115.png") repeat scroll #000000;}*/
+    body{ font: 70.5% "Trebuchet MS", sans-serif; margin: 50px;}
+    .demoHeaders { margin-top: -2em; }
+    #dialog_link {padding: .4em 1em .4em 20px;text-decoration: none;position: relative;}
+    #dialog_link span.ui-icon {margin: 0 5px 0 0;position: absolute;left: .2em;top: 50%;margin-top: -8px;}
+    ul#icons {margin: 0; padding: 0;}
+    ul#icons li {margin: 2px; position: relative; padding: 4px 0; cursor: pointer; float: left;  list-style: none;}
+    ul#icons span.ui-icon {float: left; margin: 0 4px;}
+    .tabs {height:900px; position: absolute; left: 240px;top:10px;width: 1100px}
+    .ui-datepicker table {  color: #FFFFFF;}
+    .ui-datepicker-week-end{  color: red;}
+    #contenedor_menu{width: 220px; padding: 2px;position: absolute; left: 5px;top:10px;}
+    .ini_boton {width: 220px}
+    .singout{
+
+    }
+    .tdspecial {padding: 4px;
+        vertical-align: top;
+        width: 128px;}
+        /*  #tabs {width: 800px}*/
+</style>
+</head>
+<body background="/images/fp_background.jpg">
+
+
+<div id ="contenedor_menu" >
+  <input type="checkbox" id="check1" class="ini_boton" checked="true" /><label for="check1" class="ini_boton"> Mantenimiento</label>
+  <input type="checkbox" id="check2" class="ini_boton" checked="false"/><label for="check2" class="ini_boton"> Facturaci&oacute;n</label>
+  <input type="checkbox" id="check3" class="ini_boton" checked="false"/><label for="check3" class="ini_boton"> Reportes</label>
+  <%= render 'layouts/header', :layout => false %>
+  <button id="ocultar" style="margin-top: 2px;  padding-bottom: 5px;   padding-top: 5px; " title="Ocultar menú"></button>
+
+
+</div>
+
+
+<div class="tabs" id="mantenimiento">
+  <ul>
+
+
+    <li><a href="#tabs-contect-mantenimiento" url="/articuloinds" class ="listar">Art&iacute;culos</a></li>
+    <li><a href="#tabs-contect-mantenimiento" url="/promocions" class ="listar">Promociones</a></li>
+    <li><a href="#tabs-contect-mantenimiento" url="/impuestos" class ="listar">Impuestos</a></li>
+    <li><a href="#tabs-contect-mantenimiento" url="/listaprecios" class ="listar">Lista de Precios</a></li>
+    <li><a href="#tabs-contect-mantenimiento" url="/monedas" class ="listar">Monedas</a></li>
+    <li><a href="#tabs-contect-mantenimiento" url="/pagocontados" class ="listar">Pago contado</a></li>
+    <li><a href="#tabs-contect-mantenimiento" url="/pagoacreditos" class ="listar">Pago a cr&eacute;dito</a></li>
+
+  </ul>
+  <div id="tabs-contect-mantenimiento" ></div>
+</div>
+<div class="tabs" id ="facturacion" style=" display: none;">
+  <ul>
+    <li><a href="#tabs-contect-facturacion" url="/tipoclientes" class ="listar">Grupos</a></li>
+    <li><a href="#tabs-contect-facturacion" url="/empresas" class ="listar">Empresas</a></li>
+    <li><a href="#tabs-contect-facturacion" url="/personas" class ="listar">Personas</a></li>
+
+    <li><a href="#tabs-contect-facturacion" url="/facturas" class ="listar">Facturas</a></li>
+    <li><a href="#tabs-contect-facturacion" url="/recibos" class ="listar">Recibos</a></li>
+    <li><a href="#tabs-contect-facturacion" url="/notadecreditos" class ="listar">Notas de Cr&eacute;dito</a></li>
+    <li><a href="#tabs-contect-facturacion" url="/notadecreditos?tipo=devolucion" class ="listar">Notas de Devoluci&oacute;n</a></li>
+    <% if Setting.usar_notadd  %>
+        <li><a href="#tabs-contect-facturacion" url="/notadedebitos" class ="listar">Notas de D&eacute;bito</a></li>
+    <% end %>
+
+  </ul>
+  <div id="tabs-contect-facturacion" ></div>
+</div>
+<div class="tabs" id ="reportes" style=" display: none;height: 717px;">
+
+<br/>
+<div  id ="tab-tipo-reportes" style=" position:relative;width: 540px;">
+  <ul>
+    <li><a href="#tabs-contect-reportes" class ="tipo_de_reporte" >Reporte Facturado</a></li>
+    <li><a href="#tabs-contect-reportes2" class ="tipo_de_reporte" >Reporte Art&iacute;culos</a></li>
+    <li><a href="#tabs-contect-reportes3" class ="tipo_de_reporte">Reporte Movimientos</a></li>
+    <li><a href="#tabs-contect-reportes4" class ="tipo_de_reporte">Reporte Conjunto Art&iacute;culos</a></li>
+  </ul>
+</div>
+<div>
+  <div  id ="tab-tipo-busqueda-reportes" style=" position:relative;width: 540px;">
+    <ul>
+      <li><a href="#tabs-1-reportes"  class ="tipo_cliente_busqueda">B&uacute;squeda Por Grupo</a></li>
+      <li><a href="#tabs-2-reportes"  class ="tipo_cliente_busqueda" id="default_cliente">B&uacute;squeda Por Cliente</a></li>
+    </ul>
+
+    <div id="tabs-1-reportes">
+      <div>
+        <div><input type="checkbox" id="discriminar_por_cliente" checked="" />Ordenar Documentos por cliente<br/><br/></div>
+
+        <div id="show-sucursal" checked="" > <input type="checkbox" id="agregar_sucursal_cliente" />Incluir Documentos de Sucursales<br/><br/></div>
+        <div id="show-sucursal-discriminar" checked=""> <input type="checkbox" id="discriminar_por_cliente_y_sucursal" />Ordenar Documentos por Sucursal<br/><br/></div>
+
+        <label for="filtro_grupo_reportes">Buscar Grupo: </label>
+        <input id="filtro_grupo_reportes" tipo="grupo" class="filtro_reportes filtro" />
+      </div>
+    </div>
+    <div id="tabs-2-reportes">
+      <div>
+        <span id="bonton_discriminat_cli"><input type="checkbox" id="discriminar_por_cliente_sucursal" checked="" />Ordenar Documentos por Cliente<br/><br/></span>
+        <span id="bonton_mostrar"><input type="checkbox" id="agregar_por_sucursal" checked="" />Incluir Documentos de Sucursales<br/><br/></span>
+        <span id="bonton_discriminar" ><input type="checkbox" id="discriminar_por_sucursal" checked="" />Ordenar Documentos por Sucursal<br/><br/></span>
+        <label for="filtro_empresa_reportes">Buscar Empresa: </label>
+        <input id="filtro_empresa_reportes" tipo="empresa" class="filtro_reportes filtro" /><br/><br/>
+        <span id="msg_filtro_reportes" style="color: red;"> Todos los Clientes</span>
+
+      </div>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            $("#discriminar_por_cliente").attr('checked',true);
+            $("#discriminar_por_cliente_sucursal").attr('checked',false);
+            $("#agregar_sucursal_cliente").attr('checked',true);
+            $("#empresa_rep_ca").attr('checked',true);
+            $("#agregar_por_sucursal").attr('checked',true);
+            $("#discriminar_por_cliente_y_sucursal").attr('checked',false);
+            $("#discriminar_por_sucursal").attr('checked',false);
+            $("#discriminar_por_cliente").change(function(){
+                if( $(this).attr('checked') == "checked"){
+                    $("#show-sucursal").show();
+                    $("#agregar_sucursal_cliente").attr('checked',true);
+                    $("#show-sucursal-discriminar").show();
+
+                }else{
+                    $("#show-sucursal").hide();
+                    $("#agregar_sucursal_cliente").attr('checked',false);
+                    $("#show-sucursal-discriminar").hide();
+                    $("#discriminar_por_cliente_y_sucursal").attr('checked',false);
+                }
+            })
+            $("#agregar_sucursal_cliente").change(function(){
+                if( $(this).attr('checked') == "checked"){
+                    $("#show-sucursal-discriminar").show();
+                    $("#discriminar_por_cliente_y_sucursal").attr('checked',false);
+                }else{
+                    $("#show-sucursal-discriminar").hide();
+                    $("#discriminar_por_cliente_y_sucursal").attr('checked',false);
+                }
+            })
+            $("#agregar_por_sucursal").change(function(){
+                if( $(this).attr('checked') == "checked"){
+                    $("#bonton_discriminar").show();
+                    $("#discriminar_por_sucursal").attr('checked',false);
+                }else{
+                    $("#bonton_discriminar").hide();
+                    $("#discriminar_por_sucursal").attr('checked',false);
+                }
+            })
+
+            $("#empresa_rep_ca").change(function(){
+                if( $(this).attr('checked') == "checked"){
+                    $("#sucursal_rep_ca").attr('checked',false);
+                    $("#agregar_cliente_rep_art").importTags('');
+                }else{
+                    $("#sucursal_rep_ca").attr('checked',true);
+                }
+            })
+
+            $("#sucursal_rep_ca").change(function(){
+                if( $(this).attr('checked') == "checked"){
+                    $("#empresa_rep_ca").attr('checked',false);
+                }else{
+                    $("#agregar_cliente_rep_art").importTags('');
+                    $("#empresa_rep_ca").attr('checked',true);
+                }
+            })
+
+        })
+    </script>
+
+  </div>
+</div>
+
+<div  id ="tab-tipo-art-reportes" style=" position:relative;width: 540px;">
+  <ul>
+    <li><a href="#tabs-3-reportes-art" class ="tipo_cliente_busqueda" id="default_tab3art">Conjunto de Art&iacute;culos</a></li>
+    <li><a href="#tabs-4-reportes-art" class ="tipo_cliente_busqueda">Conjunto de Clientes</a></li>
+  </ul>
+
+  <div id="tabs-3-reportes-art">
+
+
+    <div class="field">
+      <label >Art&iacute;culos</label>
+      <div class ="combobox"><input id="comercializable_rep_id" size="20" type="text" class="filtro ui-corner-all" style="width: 18em !important;"/></div>
+    </div>
+
+    <br>
+
+    <div style="height: 200px; ">
+      <div id="agregar_productos_rep"> </div>
+    </div>
+
+    <br>
+
+  </div>
+
+  <div id="tabs-4-reportes-art">
+    <div class="field">
+      <label >Clientes</label>
+      <div class ="combobox">
+        <input id="cliente_rep_id" size="20" type="text" class="filtro ui-corner-all" style="width: 18em !important;"/>
+        Empresa
+        <input type="checkbox" value="1" name="empresa_rep_ca" id="empresa_rep_ca" autocomplete="off"/>
+        Sucursal
+        <input type="checkbox" value="1" name="sucursal_rep_ca" id="sucursal_rep_ca" autocomplete="off"/>
+      </div>
+    </div>
+
+    <br>
+
+    <div style="height: 200px; ">
+      <div id="agregar_cliente_rep_art"></div>
+    </div>
+
+    <br>
+
+  </div>
+
+</div>
+
+<br/>
+<div id="reporte_params" style=" position:absolute;left:570px;top:13px;">
+  <table>
+    <tr>
+      <td class="tdspecial"><label for="reporte_inicio">Inicio</label></td></tr>
+    <td class="tdspecial"><input class="text ui-widget-content ui-corner-all" id="reporte_inicio" name="reporte[fechainicio]" size="20" type="text" /></td>
+    </tr>
+    <tr>
+      <td class="tdspecial"><label for="reporte_cierre">Cierre</label></td></tr>
+    <td class="tdspecial"><input class="text ui-widget-content ui-corner-all" id="reporte_cierre" name="reporte[fechafin]" size="20" type="text" /></td>
+    </tr>
+
+    <tr>
+      <td class="tdspecial"><label for="reporte_inicio">E-mail's</label></td></tr>
+    <td class="tdspecial"><input class="text ui-widget-content ui-corner-all" id="reporte_email"  size="60" type="text" /></td>
+
+    </tr>
+
+    <td class="tdspecial"><label for="reporte_inicio">Asunto</label></td></tr>
+    <td class="tdspecial"><input class="text ui-widget-content ui-corner-all" id="reporte_subject"  size="60" type="text" /></td>
+    </tr>
+
+    <tr>
+      <td class="tdspecial"><label for="reporte_inicio">Mensaje</label></td></tr>
+    <td class="tdspecial"><textarea  class="text ui-widget-content ui-corner-all" id="reporte_menssage" rows="4" cols="60" type="text" ></textarea></td>
+    </tr>
+
+
+
+  </table>
+</div>
+<div id="tabs-contect-reportes" >
+  <div id="texto_error_reportes"> </div>
+
+  Seleccione uno o mas documentos
+  <div id="radio_tipo_factura" >
+    <input type="checkbox" id="radio_tipo_factura1" name="radio_tipo_factura"  /><label for="radio_tipo_factura1">Contado</label>
+    <input type="checkbox" id="radio_tipo_factura6" name="radio_tipo_factura" /><label for="radio_tipo_factura6">Credito</label>
+    <input type="checkbox" id="radio_tipo_factura2" name="radio_tipo_factura" /><label for="radio_tipo_factura2">Recibo</label>
+    <input type="checkbox" id="radio_tipo_factura3" name="radio_tipo_factura" /><label for="radio_tipo_factura3">Nota de Cr&eacute;dito</label>
+    <input type="checkbox" id="radio_tipo_factura5" name="radio_tipo_factura" /><label for="radio_tipo_factura5">Nota de Devolucion</label>
+    <%  if Setting.usar_notadd %>
+        <input type="checkbox" id="radio_tipo_factura4" name="radio_tipo_factura" /><label for="radio_tipo_factura4">Nota de D&eacute;bito</label>
+    <% end %>
+  </div>
+  <br/>
+
+
+  <div id="estado_factura">
+    Reportar solo facturas
+    <div>
+      <input type="checkbox" id="pendientes" /><label for="pendientes">Pendientes</label>
+      <input type="checkbox" id="vencidas" /><label for="vencidas">Vencidas</label>
+    </div>
+  </div>
+
+  <br/>
+  <div id="estado_documentos">
+    Incluir documentos
+    <div>
+      <input type="checkbox" id="anulada" /><label for="anulada">Anulados</label>
+    </div>
+  </div>
+  <br/>
+
+  <br/>
+
+</div>
+<div id="tabs-contect-reportes2" ></div>
+<div id="tabs-contect-reportes3">
+  <div class="field" >
+    Monedas<br />
+    <% for mon in Moneda.all %>
+        <%= check_box_tag "reporte[moneda_ids][]", mon.id, false, :class => "moneda" , :data => mon.id %>
+        <%= label_tag "reporte[moneda_ids][]", mon.nombre, :for => "reporte[moneda_ids][]" %><br />
+    <% end %>
+  </div>
+</div>
+<div id="tabs-contect-reportes4" ></div>
+
+<div id="crear_reporte">Crear Reporte</div>
+</div>
+<div id="dialog" title="Dialog Title"></div>
+<div id="dialog-confirm" title="Alerta" ></div>
+
+
+</body>
+</html>

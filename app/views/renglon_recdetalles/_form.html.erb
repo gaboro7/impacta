@@ -1,0 +1,197 @@
+<%= @rand = "" %>
+
+
+  <%  @rand =  (0...8).map{65.+(rand(25)).chr}.join  %>
+
+<script>
+    <%  @extra_query = "";
+        if   @recibo.sucursal_id
+          @extra_query =  " and sucursal_id = " + @recibo.sucursal_id.to_s
+        end
+    %>
+
+  var facturas<%= @rand %> = <%=  Factura.where("(contado = 2 OR contado = false) AND adeudo > 1 AND impresa = TRUE AND anulada = false  "+@extra_query+"  AND comerciante_id = ?", @recibo.comerciante_id).to_json(:only => [ :id]).html_safe %>;
+  var factura_id<%= @rand %> = null;
+  $(function() {
+
+    $( "#guardar_renglon_detalle<%= @rand %>" ).button();
+    $( "#guardar_renglon_detalle<%= @rand %>" ).click(function() {
+      $( "#guardar_renglon_detalle<%= @rand %>" ).button( "disable" );
+      var impuesto_ids = new Array();
+      $(".impuesto<%= @rand %>:checked").each(function(){
+
+        impuesto_ids.push(parseInt($(this).attr("data")));
+
+      });
+     
+      var data = new Object();
+<% if(@renglon_recdetalle != nil) %>
+        data["_method"] =	"put";
+
+<% end; %>
+      if (factura_id<%= @rand %> != null) {
+        data['renglon_recdetalle[factura_id]'] =	factura_id<%= @rand %>;//$( "#renglon_recdetalle_factura_id<%= @rand %>" ).val();
+      }
+      data['renglon_recdetalle[detalle]'] =	$( "#renglon_recdetalle_detalle<%= @rand %>" ).val();
+      data['renglon_recdetalle[total_renglon]'] =	$( "#renglon_recdetalle_total_renglon<%= @rand %>" ).val();
+
+      data['commit'] = "Create Recibo"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/recibos/<%= @recibo.id %>/renglon_recdetalles<% if (@renglon_recdetalle==nil) %>.json/ <% else %>/<%= @renglon_recdetalle.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar_renglon_detalle<%= @rand %>" ).button( "disable" )
+          if (json_data.id){
+             $("#texto_error<%= @rand %>").html("");
+
+            <% if (@renglon_recdetalle!=nil) %>
+              closeIframe("/recibos/<%= @recibo.id %>/renglon_recdetalles/<%= @renglon_recdetalle.id %>/edit");
+            <%end%>
+
+            reloadIframe("/recibos/<%=@recibo.id%>/edit",1)
+          }else{
+            $("#texto_error_inner<%= @rand %>").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+
+            }
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar_renglon_detalle<%= @rand %>" ).button( "enable" )
+          var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+1+':</strong> "No puede asignar un importe mayor al adeudado a la Factura" </p></div><br/>';
+          $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+        }
+      });
+      return false;
+    });
+
+     $( "#renglon_recibo_factura_id<%= @rand %>" ).autocomplete({
+      source: function( request, response ) {
+        var search = request.term;
+        if(request.term == "no search")
+          search = "";
+        var data =  new Array(); ;
+        $.each(facturas<%= @rand %>, function(i, v) {
+          if ((v.id+"").indexOf(search) !=-1) {
+            data.push(v)
+
+          }
+        });
+
+        if(data.length == 0){
+          data = [{
+              id :-1,
+              texto: "no se encontraron resultados"
+            }];
+        }
+        response( $.map( data, function( item ) {
+          if (item.id == -1){
+            return {
+              label: "no se encotraron resultados" ,
+              value: request.term,
+              id :item.id
+            }
+          }else{
+            return {
+              label: item.id ,
+              value:  item.id,
+              id :item.id,
+              complete_data : item
+            }
+          }
+        }));
+      },
+      minLength: 1,
+      select: function( event, ui ) {
+
+        if(ui.item.id != -1){
+          // renglon_factura_comercializable_id = ui.item.complete_data.id;
+          //   cargarDatos(ui.item.complete_data.id);
+          // $("#nombre_producto<%= @rand %>").html(ui.item.label);
+       //   buscar_renglon_recibo<%= @rand %>(ui.item.label);
+        factura_id<%= @rand %> = ui.item.label;
+         
+        }
+        // showIframe("/articuloinds/"+ui.item.id+"/edit","Editar Articulo",500,500);
+      },
+      open: function() {
+        $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+      },
+      close: function() {
+        $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+      }
+    });
+
+
+  });
+
+</script>
+<style>
+  /*#impuesto{
+    width: auto;
+    height: 120px;
+    border: 1px #5c5c5c solid;
+    padding: 0px;
+    overflow: auto;
+    margin-bottom: 15px;
+  }
+  #impuesto input{
+    margin-left: 150px;
+  }
+  #impuesto div{
+    border: 1px #5c5c5c solid;
+    background-color: #0b93d5;
+    padding: 4px 0 4px 10px;
+    margin: 0px;
+  }
+
+  #impuesto label{
+    padding-left: 10px;
+  }*/
+</style>
+<% if  (@renglon_recdetalle==nil) %>
+  <% @renglon_recdetalle = RenglonRecdetalle.new %>
+<% end %>
+
+<%= form_for([@recibo,@renglon_recdetalle]) do |f| %>
+  <% if @recibo.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@recibo.errors.count, "error") %> prohibited this renglon_factura from being saved:</h2>
+
+      <ul>
+        <% @recibo.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div id="texto_error_inner<%= @rand %>"> </div>
+
+  <div class="field">
+    <%= f.label :Facturas %>
+    <div class ="combobox">
+        <%= f.text_field :factura_id , :size =>20, :class =>  'filtro' ,:id => "renglon_recibo_factura_id" + @rand.to_s  ,:style=>"width: 18em !important;" ,:tabindex=>1%>
+      <!-- <%= f.collection_select(:id,Factura.where("(contado = 2 OR contado = false) AND adeudo > 1 AND impresa = TRUE AND anulada = FALSE AND comerciante_id = ?", @recibo.comerciante_id) , :id,:id , {:prompt => 'Agregar una Factura.'}, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_recdetalle_factura_id" + @rand.to_s ) %> -->
+    </div>
+  </div>
+
+
+  <div class="field">
+    <%= f.label :detalle %>
+    <div class ="combobox"> <%= f.text_field :detalle , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_recdetalle_detalle" + @rand.to_s%></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :total_renglon %>
+    <div class ="combobox">  <%= f.text_field :total_renglon , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_recdetalle_total_renglon" + @rand.to_s%></div>
+  </div>
+
+  <div class="actions" >
+    <a id="guardar_renglon_detalle<%= @rand %>"><%if (@renglon_recdetalle != nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+<% end %>

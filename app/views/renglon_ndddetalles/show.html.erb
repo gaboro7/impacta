@@ -1,0 +1,25 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Detalle:</b>
+  <%= @renglon_ndddetalle.detalle %>
+</p>
+
+<p>
+  <b>Notadedebito:</b>
+  <%= @renglon_ndddetalle.notadedebito %>
+</p>
+
+<p>
+  <b>Total impuestos:</b>
+  <%= @renglon_ndddetalle.total_impuestos %>
+</p>
+
+<p>
+  <b>Total renglon:</b>
+  <%= @renglon_ndddetalle.total_renglon %>
+</p>
+
+
+<%= link_to 'Edit', edit_renglon_ndddetalle_path(@renglon_ndddetalle) %> |
+<%= link_to 'Back', renglon_ndddetalles_path %>

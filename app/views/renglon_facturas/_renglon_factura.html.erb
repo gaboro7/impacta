@@ -1,0 +1,13 @@
+<tr>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_factura.cantidad %></th>
+  <th class="ui-state-default ui-corner-all" width="350px">  <%= renglon_factura.comercializable.nombreart %></th>
+  <th class="ui-state-default ui-corner-all" width="350px">  <%= renglon_factura.comentario %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_factura.precio_unitario %></th>
+  <th class="ui-state-default ui-corner-all" width="350px">  <%= renglon_factura.descuento %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_factura.total_impuestos %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= ((renglon_factura.precio_unitario * renglon_factura.cantidad)*100).round/100.0 %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= ((renglon_factura.total_renglon + renglon_factura.total_impuestos)*100).round/100.0%></th>
+  <th  class="ui-state-default ui-corner-all"><a href ="#" data="/facturas/<%=renglon_factura.factura.id %>/renglon_facturas/<%=  renglon_factura.id %>/edit" dataw="600"  datah="600" class="edit_sub_link" title="Editar Linea"><span class="ui-icon ui-icon-wrench"></span></a></th>
+  <th  class="ui-state-default ui-corner-all"><a href="#" action="/facturas/<%=renglon_factura.factura.id %>/renglon_facturas/<%=  renglon_factura.id %>" class="delete_sub_list" data-method="delete" title="Eliminar Linea"><span class="ui-icon ui-icon-trash"></span></a></th>
+
+</tr>

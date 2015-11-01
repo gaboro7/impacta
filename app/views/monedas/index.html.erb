@@ -1,0 +1,37 @@
+<% if params[:numero_hoja].nil? %>
+<br />
+<a class="nuevo" href ="#" data="/monedas/new" dataw="290"  datah="500px" title="Agregar nueva moneda">Agregar nueva moneda</a>
+<br /><br />
+<div id="listado">
+  <%  else %>
+    <script type="text/javascript">
+      limpiar_paginado();
+    </script>
+<% end %>
+<table>
+  <tr>
+    <th class ="ui-state-active" width ="200">Nombre</th>
+    <th class ="ui-state-active" width ="200">Tipo de cambio</th>
+    <th class ="ui-state-active" width ="200">Predeterminada</th>
+    <th class ="ui-state-active" ></th>
+ 
+    <th class ="ui-state-active" ></th>
+  </tr>
+
+<% @monedas.each do |moneda| %>
+  <tr>
+    <td  class="ui-state-default ui-corner-all"><%= moneda.nombre %></td>
+    <td  class="ui-state-default ui-corner-all"><%= moneda.tipodecambio %></td>
+    <td  class="ui-state-default ui-corner-all"><%= moneda.predeterminada %></td>
+    <td  class="ui-state-default ui-corner-all"><a href ="#" data="<%=edit_moneda_path(moneda) %>" dataw="290"  datah="500px" class="list_link" title="Editar Moneda"><span class="ui-icon ui-icon-wrench"></span></a></td>
+    <td  class="ui-state-default ui-corner-all"><a href="#" action="/monedas/<%=  moneda.id %>" class="delete_list" data-method="delete" title="Eliminar Moneda"><span class="ui-icon ui-icon-trash"></span></a></td>
+  </tr>
+<% end %>
+</table>
+<%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>
+<% if params[:numero_hoja].nil? %>
+</div>
+<% end %>
+<br />
+
+

@@ -1,0 +1,199 @@
+<% @rand = (0...8).map{65.+(rand(25)).chr}.join %>
+<%= render 'form' %>
+
+<script>
+$(function() {
+  $( "#tabs-notadedebito<%= @rand %>" ).tabs();
+  $( "#tabs-renglones<%= @rand %>" ).tabs();
+
+  $(".edit_sub_link").click(function(){
+     showIframe($(this).attr("data"), "editar lineas",$(this).attr("datah"),$(this).attr("dataw") );
+  });
+  cliente_id = <%=  @notadedebito.comerciante.id %>;
+
+  $(".delete_sub_list").click(function(){
+
+    var url = $(this).attr("action");
+
+      $('#delete_sub_dialog').html($(this).attr("title"));
+      $('#delete_sub_dialog').dialog({
+        resizable: false,
+        height:160,
+        modal: true,
+        buttons: {
+          "Borrar": function() {
+            var data = new Object();
+            var this_false = $( this );
+            data["_method"] = "delete";
+            $.ajax({
+              type: "POST",
+              url: url,
+              data: data,
+              context: document.body,
+              success: function(html_data){
+                this_false.dialog( "close" );
+                reloadIframe("/notadedebitos/<%=@notadedebito.id%>/edit",1)
+
+              }
+            });
+          },
+          "Cancelar": function() {
+            $( this ).dialog( "close" );
+          }
+        }
+      });
+  });
+});
+</script>
+
+
+
+
+<div id="delete_sub_dialog"></div>
+<div id="edit_sub_dialog"></div>
+<div id="tabs-notadedebito<%= @rand %>" style="position: absolute;left: 400px; top: 20px; padding-left: 10px;">
+   <div id="total">
+
+       Total sin impuestos : <%=  "%.2f"  %@notadedebito.total_impuestos %>, total impuestos <%= "%.2f"  %@notadedebito.total_sinimpuestos %> = Total <%= "%.2f"  %(@notadedebito.total_impuestos + @notadedebito.total_sinimpuestos)  %>
+      </div>
+  <ul>
+    <li><a href="#tabs-contect-renglon" >Renglones</a></li>
+     <%if (@notadedebito.impresa) %>
+        <li><a href="#tabs-contect-otros" >Documentos Asociados</a>
+        <li><a href="#tabs-contect-impresiones" >Impresiones</a></li>
+    <% end %>
+  </ul>
+  <div id="tabs-contect-renglon">
+    <table>
+      <tr >
+        <th class ="ui-state-active" width ="400"> Factura </th>
+        <th class ="ui-state-active" width ="400"> Articulo </th>
+        <th class ="ui-state-active" width ="400"> Detalle </th>
+        <th class ="ui-state-active" width ="400"> Cantidad </th>
+        <th class ="ui-state-active" width ="400"> Precio unitario </th>
+        <th class ="ui-state-active" width ="400"> Impuestos </th>
+        <th class ="ui-state-active" width ="400"> Sin impuestos </th>
+        <th class ="ui-state-active" width ="400"> Total </th>
+        <th  class ="ui-state-active"></th>
+        <th  class ="ui-state-active"></th>
+      </tr>
+
+      <%=   render @notadedebito.renglon_notadebitos %>
+
+    </table>
+
+
+    <table>
+      <tr >
+        <th class ="ui-state-active" width ="400"> Nota de Credito </th>
+        <th class ="ui-state-active" width ="400"> Detalle </th>
+        <th class ="ui-state-active" width ="400"> Impuestos </th>
+        <th class ="ui-state-active" width ="400"> Sin impuestos </th>
+        <th class ="ui-state-active" width ="400"> Total </th>
+        <th  class ="ui-state-active"></th>
+        <th  class ="ui-state-active"></th>
+      </tr>
+
+      <%=   render @notadedebito.renglon_nddndcs %>
+
+    </table>
+
+
+    <table>
+      <tr >
+        <th class ="ui-state-active" width ="400"> Detalle </th>
+        <th class ="ui-state-active" width ="400"> Impuestos </th>
+        <th class ="ui-state-active" width ="400"> Sin impuestos </th>
+        <th class ="ui-state-active" width ="400"> Total </th>
+        <th  class ="ui-state-active"></th>
+        <th  class ="ui-state-active"></th>
+      </tr>
+
+      <%=   render @notadedebito.renglon_ndddetalles %>
+
+    </table>
+
+    <%if (!@notadedebito.impresa) %>
+    <div id="modificar_notadebito"></div>
+    <div id="tabs-renglones<%= @rand %>">
+      <ul>
+        <li><a href="#tabs-renglon-add" >Renglones de Articulos</a></li>
+        <li><a href="#tabs-renglon-notadecredito" >Renglon Nota de Credito</a></li>
+        <li><a href="#tabs-renglon-detalle" >Renglon detallado</a></li>
+
+      </ul>
+      <div id="tabs-renglon-add">
+
+        <%= render "renglon_notadebitos/form" %>
+      </div>
+
+    <div id="tabs-renglon-notadecredito">
+
+        <%= render "renglon_nddndcs/form" %>
+      </div>
+
+
+      <div id="tabs-renglon-detalle">
+
+        <%= render "renglon_ndddetalles/form" %>
+      </div>
+
+    </div>
+    <% end %>
+  </div>
+
+
+  <%if (@notadedebito.impresa) %>
+      <div id="tabs-contect-otros">
+        <%if (@notadedebito.id!=nil) %>
+          <table>
+            <tr>
+              <th class ="ui-state-active" width ="200">N&uacute;mero Documento</th>
+              <th class ="ui-state-active">Importe</th>
+              <th class ="ui-state-active">Moneda</th>
+              <th class ="ui-state-active">Estado</th>
+              <th class ="ui-state-active"></th>
+
+
+            </tr>
+
+            <% @renglon_notadecredito.each do |rr| %>
+              <tr>
+                <td  class="ui-state-default ui-corner-all">Ver nota de cr&eacute;dito N°<%= rr.notadecredito_id %></td>
+                <td  class="ui-state-default ui-corner-all"><%= ((rr.total_renglon + rr.total_impuestos)*100).round/100.0 %></td>
+                 <td  class="ui-state-default ui-corner-all"><%= rr.notadecredito.moneda.nombre %></td>
+                <td  class="ui-state-default ui-corner-all"><%= (rr.notadecredito.anulada)?"Anulada":(rr.notadecredito.impresa)?"Impresa":"S/Imprimir" %></td>
+                <td  class="ui-state-default ui-corner-all"><a class="list_link" title="Ver nota de crédito" onclick="showIframe('/notadecreditos/<%= rr.notadecredito_id %>/edit')" href="#"> <span class="ui-icon ui-icon-wrench"></span></a></td>
+              </tr>
+            <% end  %>
+
+          </table>
+        <% end %>
+
+      </div>
+  <% end %>
+
+
+  <%if (@notadedebito.impresa) %>
+      <div id="tabs-contect-impresiones">
+        <table>
+            <tr>
+              <th class ="ui-state-active">Serie</th>
+              <th class ="ui-state-active">N&uacute;mero</th>
+              <th class ="ui-state-active">Cantidad de p&aacute;ginas</th>
+              <th class ="ui-state-active">Estado</th>
+            </tr>
+            <% @notadedebito.impresiones.each do |im| %>
+              <tr>
+                <td  class="ui-state-default ui-corner-all"> <%= im.serie %></td>
+                <td  class="ui-state-default ui-corner-all"><%= im.numero %></td>
+                <td  class="ui-state-default ui-corner-all"><%= im.cant_paginas %></td>
+                <td  class="ui-state-default ui-corner-all"><%if (im.anulada) %>Anulada<%else%>Vigente<%end;%></td>
+
+              </tr>
+            <% end  %>
+        </table>
+      </div>
+  <% end %>
+
+</div>

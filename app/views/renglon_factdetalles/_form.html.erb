@@ -1,0 +1,191 @@
+<script>
+  var impuestos = [];
+<%
+
+@impuestos =   Impuesto.all()
+@impuestos.each{|index| %>
+    impuestos[<%=   index.id %>] = <%=   index.porcentajea %>;
+<%
+}
+%>
+  $(function() {
+    <% @rand =  (0...8).map{65.+(rand(25)).chr}.join   %>
+    <% if(@renglon_factdetalle != nil) %>
+
+      <%  @rand = @renglon_factdetalle.id %>
+    <% end; %>
+
+    $( "#renglon_factdetalle_detalle<%= @rand %>" ).focus();
+
+    $( "#renglon_factdetalle_total_renglon<%= @rand %>" ).keypress(function(e){
+       if(e.keyCode == 13){
+           $( "#guardar_renglon_detalle<%= @rand %>" ).click();
+       }
+    });
+
+    $(".impuesto").change(function(){
+      var valor_original = 0;
+      var valor = $("#renglon_factdetalle_total_renglon<%= @rand %>").val();
+      $(".impuesto:checked").each(function(){
+
+        valor_original = valor_original + (impuestos[$(this).attr("data")])/100;
+
+      });
+      $( "#renglon_factdetalle_total_impuestos<%= @rand %>" ).val(reondeo(($( "#renglon_factdetalle_total_renglon<%= @rand %>" ).val())*(1/(1+valor_original))*valor_original));
+  
+    });
+
+
+    $( "#renglon_factdetalle_total_renglon<%= @rand %>" ).keyup(function(){
+      var valor_original =0;
+      var valor = $(this).val();
+      $(".impuesto:checked").each(function(){
+
+        valor_original = valor_original  + (impuestos[$(this).attr("data")])/100;
+
+      });
+      $( "#renglon_factdetalle_total_impuestos<%= @rand %>" ).val(reondeo(($( "#renglon_factdetalle_total_renglon<%= @rand %>" ).val())*(1/(1+valor_original))*valor_original));
+    });
+
+    $( "#guardar_renglon_detalle<%= @rand %>" ).button();
+    $( "#guardar_renglon_detalle<%= @rand %>" ).click(function() {
+      $( "#guardar_renglon_detalle<%= @rand %>" ).button( "disable" );
+      var impuesto_ids = new Array();
+      $(".impuesto:checked").each(function(){
+
+        impuesto_ids.push(parseInt($(this).attr("data")));
+
+      });
+  
+
+      
+      var data = new Object();
+<% if(@renglon_factdetalle != nil) %>
+        data["_method"] =	"put";
+
+<% end; %>
+      data['renglon_factdetalle[detalle]'] =	$( "#renglon_factdetalle_detalle<%= @rand %>" ).val();
+      data['renglon_factdetalle[total_impuestos]'] =	$( "#renglon_factdetalle_total_impuestos<%= @rand %>" ).val();
+      data['renglon_factdetalle[total_renglon]'] =	$( "#renglon_factdetalle_total_renglon<%= @rand %>" ).val() - $( "#renglon_factdetalle_total_impuestos<%= @rand %>" ).val();
+      data['renglon_factdetalle[impuesto_ids][]'] =	impuesto_ids;
+
+
+      data['commit'] = "Create factura"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/facturas/<%= @factura.id %>/renglon_factdetalles<% if (@renglon_factdetalle==nil) %>.json/ <% else %>/<%= @renglon_factdetalle.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar_renglon_detalle<%= @rand %>" ).button( "enable" );
+          if (json_data.id){
+            $("#texto_error<%= @rand %>").html("");
+          
+            <% if (@renglon_factdetalle!=nil) %>
+              closeIframe("/facturas/<%= @factura.id %>/renglon_factdetalles/<%= @renglon_factdetalle.id %>/edit");
+            <%end%>
+          
+            reloadIframe("/facturas/<%=@factura.id %>/edit",1)
+          }else{
+            $("#texto_error_inner<%= @rand %>").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+
+            }
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar_renglon_detalle<%= @rand %>" ).button( "enable" )
+          $("#texto_error_inner<%= @rand %>").html("");
+          for (var i in xhr){
+            var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+xhr[i]+'.</p></div><br/>';
+            $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+
+          }
+        }
+      });
+      return false;
+    });
+  });
+
+</script>
+<style>
+  #impuesto{
+    width: auto;
+    height: 120px;
+    border: 1px #5c5c5c solid;
+    padding: 0px;
+    overflow: auto;
+    margin-bottom: 15px;
+  }
+  #impuesto input{
+    margin-left: 150px;
+  }
+  #impuesto div{
+    border: 1px #5c5c5c solid;
+    background-color: #0b93d5;
+    padding: 4px 0 4px 10px;
+    margin: 0px;
+  }
+
+  #impuesto label{
+    padding-left: 10px;
+  }
+</style>
+<% if  (@renglon_factdetalle==nil) %>
+  <% @renglon_factdetalle = RenglonFactdetalle.new %>
+<% end %>
+
+<%= form_for([@factura,@renglon_factdetalle]) do |f| %>
+  <% if @factura.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@factura.errors.count, "error") %> prohibited this renglon_factura from being saved:</h2>
+
+      <ul>
+        <% @factura.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div id="texto_error_inner<%= @rand %>"> </div>
+  <div class="field">
+    <%= f.label :detalle %>
+    <div class ="combobox"> <%= f.text_field :detalle , :size =>48, :class =>  'text ui-widget-content ui-corner-all', :tabindex=>1, :id => "renglon_factdetalle_detalle" + @rand.to_s%></div>
+  </div>
+
+  <div class="field" id="impuesto">
+    <div>
+      <%= f.label :impuestos %>
+    </div>
+
+    <% if @renglon_factdetalle.id == nil %>
+      <% for imp in Impuesto.all() %>
+        <%= label_tag "renglon_factdetalle[impuesto_ids][]", imp.nombre , :for => "renglon_factdetalle[impuesto_id][]" %>
+        <%= check_box_tag "renglon_factdetalle[impuesto_ids][]", imp.id ,false , :class => "impuesto",:data => imp.id %><br/>
+
+      <% end %>
+    <% else %>
+      <% for imp in Impuesto.all() %>
+        <%= label_tag "renglon_factdetalle[impuesto_ids][]", imp.nombre , :for => "renglon_factdetalle[impuesto_id][]" %>
+        <%= check_box_tag "renglon_factdetalle[impuesto_ids][]", imp.id ,@renglon_factdetalle.impuestos.include?(imp) , :class => "impuesto",:data => imp.id %><br/>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="field">
+    <%= f.label :total_renglon %>
+    <div class ="combobox">  <%= f.text_field :total_renglon , :size =>20, :class =>  'text ui-widget-content ui-corner-all', :tabindex=>2, :id => "renglon_factdetalle_total_renglon" + @rand.to_s%></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :total_impuestos %>
+    <div class ="combobox">  <%= f.text_field :total_impuestos , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_factdetalle_total_impuestos" + @rand.to_s,:readonly=>"readonly"%></div>
+  </div>
+
+
+  <div class="actions" >
+    <a id="guardar_renglon_detalle<%= @rand %>"><%if (@renglon_factdetalle != nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+<% end %>

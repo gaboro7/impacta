@@ -1,0 +1,11 @@
+<tr>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_recibo_doc.documento.numero %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%=   if (renglon_recibo_doc.documento.class.name != "Notadecredito")
+                                                                        renglon_recibo_doc.documento.class.name
+                                                                  else
+                                                                    (renglon_recibo_doc.documento.es_devolucion == true)?"Nota de Devolucion" : "Nota de Credito"
+                                                                  end %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= ((renglon_recibo_doc.total_renglon)*100).round/100.0 %></th>
+  <th  class="ui-state-default ui-corner-all"><a href ="#" data="/recibos/<%=renglon_recibo_doc.recibo.id%>/renglon_recibo_docs/<%=  renglon_recibo_doc.id %>/edit" dataw="600"  datah="600" class="edit_sub_link<%=@randa%>" title="Editar Linea"><span class="ui-icon ui-icon-wrench"></span></a></th>
+  <th  class="ui-state-default ui-corner-all"><a href="#" action="/recibos/<%=renglon_recibo_doc.recibo.id%>/renglon_recibo_docs/<%=  renglon_recibo_doc.id %>" class="delete_sub_list<%=@randa%>" data-method="delete" title="Eliminar Linea"><span class="ui-icon ui-icon-trash"></span></a></th>
+</tr>

@@ -1,0 +1,147 @@
+<script>
+  $(function() {
+    $( "#tabs-inner" ).tabs();
+    if (inner_tab)
+      $( "#tabs-inner" ).tabs({ selected: inner_tab });
+   
+
+    $(".edit_sub_link").click(function(){
+      showIframe($(this).attr("data"), $(this).attr("title"),$(this).attr("dataw"),$(this).attr("datah"))
+    });
+    $(".delete_sub_list").click(function(){
+      var url = $(this).attr("action");
+      $('#ventana-borrar-interna').html($(this).attr("title"));
+      $('#ventana-borrar-interna').dialog({
+        resizable: false,
+        height:160,
+        modal: true,
+        buttons: {
+          "Borrar": function() {
+            var data = new Object();
+            var this_false = $( this );
+            data["_method"] = "delete";
+            $.ajax({
+              type: "POST",
+              url: url,
+              data: data,
+              context: document.body,
+              success: function(html_data){
+                this_false.dialog( "close" );
+                reloadIframe("/empresas/<%=@empresa.id%>/edit",$( "#tabs-inner" ).tabs( "option", "selected" ));
+              }
+            });
+          },
+          "Cancelar": function() {
+            $( this ).dialog( "close" );
+          }
+        }
+      });
+    });
+  });
+</script>
+
+<%= render 'form' %>
+<div id="ventana-borrar-interna"></div>
+<div id="ventana-interna"></div>
+<div style="position: absolute;left: 380px;top: 10px; width: 550px">
+  <div id="tabs-inner">
+    <ul>
+      <li><a href="#tabs-1">Telefonos</a></li>
+      <li><a href="#tabs-2">e-mails</a></li>
+      <li><a href="#tabs-3">Contactos</a></li>
+      <li><a href="#tabs-4">Sucursales</a></li>
+      <li><a href="#tabs-5">Descuentos</a></li>
+    </ul>
+    <div id="tabs-1" >
+      <b>Listado Telefonos:</b>
+      <% @contelefono = @empresa %>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> Telefono </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <%= render @empresa.telefonos %>
+      </table>
+
+      <div id="modificar_telefonos"></div>
+      <h3>Agregar telefono:</h3>
+      <%= render "telefonos/form" %>
+
+    </div>
+
+    <div id="tabs-2" >
+      <b>Listado e-mails:</b>
+      <% @conmail = @empresa %>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> e-mail </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <%= render @empresa.mail_internos %>
+      </table>
+
+      <div id="modificar_emails"></div>
+      <h3>Agregar e-mail:</h3>
+      <%= render "mail_internos/form" %>
+
+    </div>
+
+    <div id="tabs-3" >
+      <h3>Listado Contactos:</h3>
+      <% @contactable = @empresa %>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> Nombre </th>
+          <th> Sector </th>
+          <th> Interno </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <%= render @empresa.contactos %>
+      </table>
+      <div id="modificar_contacto"></div>
+      <br/>
+      <h3>Agregar Contacto:</h3>
+      <%= render "contactos/form" %>
+    </div>
+
+    <div id="tabs-4" >
+      <p>
+        <b>Sucursales:</b>
+      <table>
+        <th class ="ui-state-active" width ="80">N&uacute;mero</th>
+        <th class ="ui-state-active" width ="400"> Nombre </th>
+        <th class ="ui-state-active" width ="400"> domicilio </th>
+        <th class ="ui-state-active">  </th>
+        <th class ="ui-state-active">  </th>
+        </tr>
+        <% @empresa = @empresa %>
+        <%= render @empresa.sucursals %>
+      </table>
+
+      </p>
+      <h2>Agregar Sucursal:</h2>
+      <%= render "sucursals/form" %>
+    </div>
+     <div id="tabs-5" >
+      <p>
+
+      <table>
+        <tr>
+        <th class ="ui-state-active" width ="400"> Art&iacute;culo </th>
+        <th class ="ui-state-active" width ="400"> Descuento (%)</th>
+        <th class ="ui-state-active">  </th>
+        <th class ="ui-state-active">  </th>
+        </tr>
+
+        <%= render @empresa.descuento_clientes %>
+      
+      </table>
+
+      </p>
+       <%= render "descuento_clientes/form" %>
+    </div>
+  </div>
+</div>

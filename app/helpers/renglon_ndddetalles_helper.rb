@@ -1,0 +1,2 @@
+module RenglonNdddetallesHelper
+end

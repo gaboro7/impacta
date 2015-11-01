@@ -1,0 +1,31 @@
+<h1>Listing sucursals</h1>
+
+<table>
+  <tr>
+    <th>N&uacute;mero</th>
+    <th>Nombre</th>
+    <th>Domicilio</th>
+    <td><%= for con in empresa.contactos
+        con.nombre
+      end
+    %>
+    </td>
+    <th></th>
+  </tr>
+
+  <% @sucursals.each do |sucursal| %>
+    <tr>
+      <td><%= sucursal.id %></td>
+      <td><%= sucursal.nombre %></td>
+      <td><%= sucursal.domicilio %></td>
+      
+      <td><%= link_to 'Show', sucursal %></td>
+      <td><%= link_to 'Edit', edit_sucursal_path(sucursal) %></td>
+      <td><%= link_to 'Destroy', sucursal, confirm: 'Are you sure?', method: :delete %></td>
+    </tr>
+  <% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Sucursal', new_sucursal_path %>

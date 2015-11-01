@@ -1,0 +1,23 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Nombre:</b>
+  <%= @listaprecio.nombre %>
+</p>
+
+<p>
+  <b>Template:</b>
+  <%= @listaprecio.template %>
+</p>
+
+<p>
+	<b> Clientes</b>
+	<% for c in @listaprecio.clientes %>
+        
+        <%= c.nombrereal %>
+        <% end %>
+ </p>
+
+
+<%= link_to 'Edit', edit_listaprecio_path(@listaprecio) %> |
+<%= link_to 'Back', listaprecios_path %>

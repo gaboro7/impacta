@@ -1,0 +1,19 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Nombre:</b>
+  <%= @moneda.nombre %>
+</p>
+
+<p>
+  <b>Tipodecambio:</b>
+  <%= @moneda.tipodecambio %>
+</p>
+
+<p>
+  <b>Predeterminada:</b>
+  <%= @moneda.predeterminada %>
+</p>
+
+<%= link_to 'Edit', edit_moneda_path(@moneda) %> |
+<%= link_to 'Back', monedas_path %>

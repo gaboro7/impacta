@@ -1,0 +1,73 @@
+<% rand = (0...8).map{65.+(rand(25)).chr}.join %>
+<script>
+
+  $( "form" ).submit(function(event) {
+    event.preventDefault();
+    var self = this;
+
+  });
+  $('input').attr('autocomplete','off');
+</script>
+<script type="text/javascript">
+  $(function(){
+    $( "#guardarTelefono<%=rand%>" ).button();
+    $( "#guardarTelefono<%=rand%>" ).click(function() {
+      $(this).button( "disable" )
+      var data = new Object();
+      data['telefono[telefono]'] =	$( "#telefono_telefono<%=rand%>" ).val();
+      data['commit'] =	"Create Telefono";
+      data["utf8"] =	true;
+
+      <%
+      @goto = redirigirTelefono @contelefono
+      %>
+
+      $.ajax({
+        type: "POST",
+        url: "<%=@goto%>/telefonos.json",
+        data: data,
+        context: document.body,
+        success:function(json_data){
+          $( "#guardarTelefono<%=rand%>" ).button( "enable" )
+          if (json_data.id){
+            reloadIframe("<%=@goto%>/edit",0);
+          }else{
+            $("#texto_error_telefono<%=rand%>").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error_telefono<%=rand%>").html($("#texto_error_telefono<%=rand%>").html()+error);
+
+            }
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardarTelefono<%=rand%>" ).button( "enable" )
+          $("#texto_error_telefono<%=rand%>").html("");
+          var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>Error:</strong> Error interno.</p></div><br/>'; $("#texto_error_telefono<%=rand%>").html($("#texto_error_telefono<%=rand%>").html()+error);
+        }
+      });
+      return false;
+    });
+  });
+</script>
+<%= form_for([@contelefono, Telefono.new]) do |f| %>
+  <% if @contelefono.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@contelefono.errors.count, "error") %> No se pudo agregar el Teléfono :</h2>
+
+      <ul>
+        <% @contelefono.errors.messages.each do |msg| %>
+          <li><%= msg[1][0] %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+<div id="texto_error_telefono<%=rand%>"> </div>
+  <div class="field">
+    <%= f.label :telefono %>
+    <div class ="combobox">  <%= f.text_field :telefono, :size =>20, :class =>  'text ui-widget-content ui-corner-all' , :id => "telefono_telefono"+rand.to_s %></div>
+  </div>
+  <div class="actions">
+    <a id="guardarTelefono<%=rand%>">Guardar Nuevo Telefono</a>
+  </div>
+<% end %>

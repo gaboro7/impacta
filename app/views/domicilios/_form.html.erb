@@ -1,0 +1,22 @@
+<%= form_for([@persona, Domicilio.new]) do |f| %>
+  <% if @persona.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@persona.errors.count, "error") %> prohibited this domicilio from being saved:</h2>
+
+      <ul>
+      <% @persona.errors.messages.each do |msg| %>
+        <li><%= msg[1][0] %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :domicilio %><br />
+    <%= f.text_field :domicilio %>
+  </div>
+  
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

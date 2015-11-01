@@ -1,0 +1,45 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Anulada:</b>
+  <%= @notadecredito.anulada %>
+</p>
+
+<p>
+  <b>Codigo barras:</b>
+  <%= @notadecredito.codigo_barras %>
+</p>
+
+<p>
+  <b>Comerciante:</b>
+  <%= @notadecredito.comerciante_id %>
+</p>
+
+<p>
+  <b>Comerciante type:</b>
+  <%= @notadecredito.comerciante_type %>
+</p>
+
+<p>
+  <b>Detalle:</b>
+  <%= @notadecredito.detalle %>
+</p>
+
+<p>
+  <b>Fecha:</b>
+  <%= @notadecredito.fecha %>
+</p>
+
+<p>
+  <b>Impresa:</b>
+  <%= @notadecredito.impresa %>
+</p>
+
+<p>
+  <b>Sucursal:</b>
+  <%= @notadecredito.sucursal %>
+</p>
+
+
+<%= link_to 'Edit', edit_notadecredito_path(@notadecredito) %> |
+<%= link_to 'Back', notadecreditos_path %>

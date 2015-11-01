@@ -1,0 +1,28 @@
+<p id="notice"><%= notice %></p>
+<h2>Articulo Compuesto  </h2>
+<p>
+  <b>Nombre:</b>
+  <%= @articulocomp.nombre %>
+</p>
+
+<p>
+  <b>Descripci&oacute;n:</b>
+  <%= @articulocomp.descripcion %>
+</p>
+
+<p>
+  <b> Articulos contenidos</b>
+  <%= render @articulocomp.articulos %>
+</p>
+
+<h2>rolarticuloOPP</h2>
+<% @rola = @articulocomp %>
+<% for c in @articulocomp.rolarticulos 
+    @rol = c
+    %>  
+<%=    render :template =>  "comercializables/edit" %> 
+ 
+<% end %>
+
+<%= link_to 'Edit', edit_articulocomp_path(@articulocomp) %> |
+<%= link_to 'Back', articulocomps_path %>

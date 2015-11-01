@@ -1,0 +1,39 @@
+<h1>Listing renglon_notadebitos</h1>
+
+<table>
+  <tr>
+    <th>Notadedebito</th>
+    <th>Factura</th>
+    <th>Comentario</th>
+    <th>Cantidad</th>
+    <th>Comercializable</th>
+    <th>Descuento</th>
+    <th>Precio unitario</th>
+    <th>Total impuestos</th>
+    <th>Total renglon</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @renglon_notadebitos.each do |renglon_notadebito| %>
+  <tr>
+    <td><%= renglon_notadebito.notadedebito %></td>
+    <td><%= renglon_notadebito.factura %></td>
+    <td><%= renglon_notadebito.comentario %></td>
+    <td><%= renglon_notadebito.cantidad %></td>
+    <td><%= renglon_notadebito.comercializable %></td>
+    <td><%= renglon_notadebito.descuento %></td>
+    <td><%= renglon_notadebito.precio_unitario %></td>
+    <td><%= renglon_notadebito.total_impuestos %></td>
+    <td><%= renglon_notadebito.total_renglon %></td>
+    <td><%= link_to 'Show', renglon_notadebito %></td>
+    <td><%= link_to 'Edit', edit_renglon_notadebito_path(renglon_notadebito) %></td>
+    <td><%= link_to 'Destroy', renglon_notadebito, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Renglon notadebito', new_renglon_notadebito_path %>

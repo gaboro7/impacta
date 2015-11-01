@@ -1,0 +1,105 @@
+<% if params[:numero_hoja].nil? %>
+<script type="text/javascript">
+  //valor 0: No muestra el id del objeto en las búsquedas
+  //valor 1: Lo muestra
+  var config_show_num_ids = 1; //<= Setting.show_num_ids %> ;
+
+  $( "#filtro_empresa" ).autocomplete({
+    source: function( request, response ) {
+      $.ajax({
+        url: "empresas.json?filtro="+request.term,
+        success: function( data ) {
+          data = data.empresas
+          if(data.length == 0){
+            data = [{
+                id :-1
+              }];
+          }
+          response( $.map( data, function( item ) {
+            if (item.id == -1){
+              return {
+                label: "no se encotraron resultados" ,
+                value: request.term,
+                id :item.id
+              }
+            }else{
+                if(config_show_num_ids == 1){
+                  return {
+                    label: "<" + item.id + ">" + item.nombre,
+                    value: item.nombre,
+                    id :item.id
+                  }
+                }else{
+                   return {
+                    label: item.nombre,
+                    value: item.nombre,
+                    id :item.id
+                  }
+                }
+            }
+          })
+        ); 
+        },
+        error: function( xhr, status, index, anchor ) {
+          return {
+            label: 'no se econtro reultado' ,
+            value: request.term,
+            id :-1
+          }
+        }
+      });
+    },
+    minLength: 1,
+    select: function( event, ui ) {
+      if(ui.item.id != -1)
+        showIframe("/empresas/"+ui.item.id+"/edit","Editar Empresa",960,600);
+    },
+    open: function() {
+      $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+    },
+    close: function() {
+      $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+    }
+  });
+</script>
+<br />
+<a class="nuevo" href ="#" data="/empresas/new" dataw="600"  datah="500px" title="Agregar nueva empresa">Agregar nueva Empresa</a>
+<br /><br />
+<div id="buscar_empresa" style="position: absolute;left: 290px;top:77px;"><label for="filtro_empresa">Buscar Empresa: </label>
+  <input id="filtro_empresa" class="filtro" />
+</div>
+<div id="listado">
+  <%  else %>
+    <script type="text/javascript">
+      limpiar_paginado();
+    </script>
+<% end %>
+<table>
+  <tr>
+    <th class ="ui-state-active" width ="80">N&uacute;mero</th>
+    <th class ="ui-state-active" width ="300">Nombre</th>
+    <th class ="ui-state-active" width ="300">Nombre Fiscal</th>
+    <th class ="ui-state-active" width ="200">R.U.T</th>
+    <th class ="ui-state-active" width ="400">Domicilio</th>
+    <th class ="ui-state-active"></th>
+    <th class ="ui-state-active"></th>
+  </tr>
+
+  <% @empresas.each do |empresa| %>
+    <tr class="fila">
+      <td class="ui-state-default ui-corner-all" ><%=  empresa.id %></td>
+      <td class="ui-state-default ui-corner-all" ><%=  truncate(empresa.nombrereal, :length => 25) %></td>
+      <td class="ui-state-default ui-corner-all" ><%= truncate(empresa.nombrefiscal, :length => 25) %></td>
+      <td class="ui-state-default ui-corner-all" ><%= empresa.nif %></td>
+      <td class="ui-state-default ui-corner-all" ><%= truncate(empresa.domicilio, :length => 50) %></td>
+
+      <td class="ui-state-default ui-corner-all" ><a href ="#" data="<%=edit_empresa_path(empresa) %>" dataw="600"  datah="960px" class="list_link" title="Editar Empresa"><span class="ui-icon ui-icon-wrench"></span></a></td>
+      <td class="ui-state-default ui-corner-all" ><a href="#" action="/empresas/<%=  empresa.id %>" class="delete_list" data-method="delete" title="Eliminar Empresa"><span class="ui-icon ui-icon-trash"></span></a></td>
+    </tr>
+  <% end %>
+</table>
+
+<%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>
+<% if params[:numero_hoja].nil? %>
+</div>
+<% end %>

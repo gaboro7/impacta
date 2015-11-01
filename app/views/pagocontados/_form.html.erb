@@ -1,0 +1,101 @@
+<script>
+  $(function() {
+    $("#pagocontado_estado").attr("class", 'text ui-widget-content ui-corner-all');
+<% if(@pagocontado.id==nil) %>
+      $( "#pagocontado_estado" ).val("habilitado");
+<% end %>
+    $( "#guardar" ).button();
+    $( "#guardar" ).click(function() {
+      $(this).button( "disable" )
+      var data = new Object();
+<% if(@pagocontado.id!=nil) %>
+        data["_method"] =	"put";
+<% end; %>
+      data['pagocontado[nombre]'] =	$( "#pagocontado_nombre" ).val();
+      data['pagocontado[estado]'] =	$( "#pagocontado_estado" ).val();
+      data['pagocontado[predeterminada]'] =	$( "#pagocontado_predeterminada:checked" ).length;
+      var moneda_ids = new Array();
+      $(".moneda:checked").each(function(){
+
+        moneda_ids.push(parseInt($(this).attr("data")));
+
+      });
+      data['pagocontado[moneda_ids][]'] =	moneda_ids;
+      data['commit'] = "Update Pagocontado"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/pagocontados<% if (@pagocontado.id==nil) %>.json/ <% else %>/<%= @pagocontado.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar" ).button( "enable" )
+          if (json_data.id){
+            $("#texto_error").html("");
+            tab_selected.click();
+            closeIframe("/pagocontados<% if (@pagocontado.id==nil) %>/new<% else %>/<%= @pagocontado.id %>/edit<%end%>");
+          }else{
+            $("#texto_error").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error").html($("#texto_error").html()+error);
+
+            }
+          }
+
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar" ).button( "enable" )
+          $("#texto_error").html("");
+          for (var i in xhr){
+            var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+xhr[i]+'.</p></div><br/>';
+            $("#texto_error").html($("#texto_error").html()+error);
+
+          }
+        }
+      });
+      return false;
+    });
+  });
+</script>
+
+
+
+<%= form_for(@pagocontado) do |f| %>
+  <% if @pagocontado.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@pagocontado.errors.count, "error") %> prohibited this pagocontado from being saved:</h2>
+
+      <ul>
+        <% @pagocontado.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div id="texto_error"> </div>
+  <div class="field">
+    <%= f.label :nombre %><br />
+    <div class ="combobox"><%= f.text_field :nombre, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+  </div>
+  <div class="field" >
+    <%= f.label :estado %><br />
+    <div class ="combobox">  <%= f.enum_select :estado, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %>  </div>
+  </div><br />
+  <div class="field">
+    <%= f.label :predeterminada %>
+    <div class ="combobox"><%= f.check_box :predeterminada %></div>
+  </div>
+
+  <div class="field" >
+    <%= f.label :monedas %><br />
+    <% for mon in Moneda.all %>
+      <%= check_box_tag "pagocontado[moneda_ids][]", mon.id, @pagocontado.moneda.include?(mon), :class => "moneda" , :data => mon.id %>
+      <%= label_tag "pagocontado[moneda_ids][]", mon.nombre, :for => "pagocontado[moneda_ids][]" %><br />
+    <% end %>
+  </div>
+
+  <div class="actions">
+    <a id="guardar"><%if (@pagocontado.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+<% end %>

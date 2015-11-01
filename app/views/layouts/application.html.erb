@@ -1,0 +1,114 @@
+<style>
+  .ui-autocomplete-loading {
+    background: white url('/images/ajax-loader.gif') right center no-repeat;
+
+
+
+  }
+  .filtro {
+    width: 25em;
+
+  }
+
+</style>
+<script type="text/javascript">
+  function limpiar_paginado(){
+    $(".flickr_pagination").children( "a").each( function(index,obj){
+      var url = $(obj).attr("href");
+      $(obj).attr("href","#");
+      $(obj).attr("fhref",url);
+      
+      $(obj).click(function(){
+        $.ajax({
+
+          url: $(this).attr("fhref"),
+          success: function( data ) {
+            $("#listado").html('<p align ="center"><img  src="/images/ajax-loader.gif" /></p>');
+            $("#listado").html(data);
+          },
+          error: function( xhr, status, index, anchor ) {
+            alert("error");
+          }
+        });
+
+      })
+    });
+
+  }
+
+
+  $(function(){
+    limpiar_paginado()
+
+
+
+    $( ".nuevo" ).button();
+    $( ".nuevo" ).click(function() {
+      showIframe($(this).attr("data"),$(this).attr("title"),($(this).attr("datah")==undefined)?500:$(this).attr("datah"),$(this).attr("dataw"));
+    });
+
+
+    $(".list_link").click(function() {
+     
+      showIframe($(this).attr("data"),$(this).attr("title"),($(this).attr("datah")==undefined)?500:$(this).attr("datah"),$(this).attr("dataw"));
+      //   $(".list_link").click(null);
+      return false;
+    });
+      $( "#singout" ).click(function(){
+              window.location.href = "/signout";
+             });
+    $(".delete_list").click(function(){
+
+      var url = $(this).attr("action");
+      var title = $(this).attr("title");
+      $('#delete_dialog').html(title);
+      $('#delete_dialog').dialog({
+        resizable: false,
+        height:160,
+        modal: true,
+        buttons: {
+          "Borrar": function() {
+            var data = new Object();
+            var this_false = $( this );
+            data["_method"] = "delete";
+            $.ajax({
+              type: "POST",
+              url: url,
+              data: data,
+              context: document.body,
+              success: function(html_data){
+                tab_selected.click();
+                this_false.dialog( "close" );
+              },
+              error: function( xhr, status, index, anchor ) {
+                this_false.dialog( "close" );
+                $('#delete_dialog').html("No se puede realizar esta accion");
+                $('#delete_dialog').dialog({
+                  resizable: false,
+                  height:160,
+                  modal: true,
+                  buttons: {
+                    "Aceptar": function() {
+                      $('#delete_dialog').dialog( "close" );
+                    }
+                  }
+                });
+
+              }
+
+
+            });
+          },
+          "Cancelar": function() {
+            $( this ).dialog( "close" );
+          }
+        }
+      });
+    });
+
+  }
+);
+</script>
+
+<%= yield %>
+<div id="delete_dialog" title="Eliminar"></div>

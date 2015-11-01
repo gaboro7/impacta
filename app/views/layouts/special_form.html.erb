@@ -1,0 +1,39 @@
+
+<style type="text/css">
+  /*demo page css*/
+  select{ width: 200px;
+
+
+  }
+
+.text{
+    width: 200px !important;
+}
+
+  .combobox{
+    padding-left:150px;
+    position: relative;
+    top : -18px;
+  }
+
+
+
+  .ui-widget-content{
+       background: black; 
+
+  }
+
+  
+</style>
+<script>
+
+  $( "form" ).submit(function(event) {
+    event.preventDefault();
+    var self = this;
+
+  });
+  $('input').attr('autocomplete','off');
+</script>
+
+
+<%= yield %>

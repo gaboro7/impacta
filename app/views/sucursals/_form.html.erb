@@ -1,0 +1,74 @@
+
+
+<script type="text/javascript">
+  <%
+
+    rand = ""
+    if (@sucursal!=nil)
+        rand = @sucursal.id
+
+    end
+
+  %>
+
+  $(function(){
+    $( "#guardar_sucursal<%=rand%>" ).button();
+    $( "#guardar_sucursal<%=rand%>" ).click(function() {
+
+      var data = new Object();
+      data['sucursal[nombre]'] =	$( "#sucursal_nombre<%=rand%>" ).val();
+      data['sucursal[domicilio]'] =	$( "#sucursal_domicilio<%=rand%>" ).val();
+    
+      //data['commit'] =	"Create Sucursal";
+      data["utf8"] =	true;
+      <%if @sucursal != nil%>
+        data["_method"] =	"put";
+      <%end%>
+      $.ajax({
+        type: "POST",
+        url: "/empresas/<%=@empresa.id%>/sucursals<% if (@sucursal == nil) %>.json <% else %>/<%= @sucursal.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(html_data){
+        $( "#guardar_sucursal<%=@rand%>").button( "enable" );
+        <%if @sucursal != nil%>
+           reloadIframe("/empresas/<%=@empresa.id%>/edit",3);
+           reloadIframe( "/empresas/<%=@empresa.id%>/sucursals/<%=@sucursal.id%>/edit");
+        <%end%>
+           reloadIframe("/empresas/<%=@empresa.id%>/edit",3);
+        }
+      });
+      return false;
+    });
+  });
+</script>
+<%
+if @sucursal.nil?
+   @sucursal = Sucursal.new
+end
+  %>
+
+<%= form_for([@empresa, @sucursal]) do |f| %>
+  <% if @empresa.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@empresa.errors.count, "error") %> prohibited this sucursal from being saved:</h2>
+
+      <ul>
+      <% @empresa.errors.messages.each do |msg| %>
+        <li><%= msg[1][0] %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :nombre %>
+    <div class ="combobox"> <%= f.text_field :nombre, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id =>  "sucursal_nombre"+ rand.to_s %></div>
+    <%= f.label :domicilio %>
+    <div class ="combobox"> <%= f.text_field :domicilio , :size =>20, :class =>  'text ui-widget-content ui-corner-all' , :id =>  "sucursal_domicilio"+rand.to_s %></div>
+  </div>
+
+  <div class="actions">
+    <a id="guardar_sucursal<%=rand%>"> <%if @sucursal.id!= nil%>Guardar Cambios<%else%>Guardar Nuevo Sucursal<%end%></a>
+  </div>
+<% end %>

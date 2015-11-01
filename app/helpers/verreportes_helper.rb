@@ -1,0 +1,2 @@
+module VerreportesHelper
+end

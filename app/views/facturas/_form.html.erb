@@ -1,0 +1,880 @@
+<% @rand = (0...8).map{65.+(rand(25)).chr}.join %>
+
+<style>
+  .ui-autocomplete-loading {
+    background: white url('/images/ajax-loader.gif') right center no-repeat;
+
+
+
+  }
+  .filtro {
+    width: 25em;
+
+  }
+</style>
+
+<script>
+  var cliente_id_factura =  <%if @factura.id %><%= @factura.comerciante.id %> <%else%>-1<%end%>;
+  var sucursal_id = -1;
+  var tipocambio = <%if (@factura.id) %><%=  @factura.moneda.tipodecambio  %><%else%>1<%end;%>;
+
+  var fact_pgcred_cantidad = 0;
+  var fact_pgcred_unidad  = 0;
+
+  var conf_ingf_key = 45; // tecla insert
+  var conf_imp_key = 119; // tecla F8 para imprimir
+
+  // visualizacion de listado de clientes
+  // 0: e-> <id>e.nombre : s-> <id>s.nombre[s.empresa.nombre]
+  // 1: e-> <id>e.nombre[e.direccion] : s-> <id>s.nombre[s.dirección]
+  var conf_view_cli = 1;
+
+  // Recargar despues de imprimir 0 cerrar despues de imprimir 1
+  var conf_recargar_o_cerrar_desp_imp = 1;
+
+  function registrar_factura(){
+      var data = new Object();
+          <% if(@factura.id!=nil) %>
+               data["_method"] =	"put";
+          <% end; %>
+
+          data['cliente_id'] =	cliente_id_factura;
+          data['factura[rut]'] =	$( "#factura_rut" ).val();
+          data['factura[direccion_cliente]'] =	$( "#factura_direccion_cliente" ).val();
+          data['factura[detalle]'] =	$( "#factura_detalle" ).val();
+          data['factura[fecha]'] =	$( "#factura_fecha" ).val();
+          data['factura[formadepago_id]'] =($("#contador:checked").length > 0)? $( "#pago_contado" ).val():$( "#pago_credito" ).val();
+          data['factura[moneda_id]'] = ($("#contador:checked").length > 0)? $( "#cont_moneda_id" ).val():$( "#cred_moneda_id" ).val();
+          data['factura[contado]'] = $("#contador:checked").length;
+          if (sucursal_id != -1)
+            data['factura[sucursal_id]'] = sucursal_id;
+
+          data['commit'] = "Create factura"
+          data["utf8"] =	true;
+          $.ajax({
+            type: "POST",
+            url: "/facturas<% if (@factura.id==nil) %>.json/ <% else %>/<%= @factura.id %>.json <%end%>",
+            data: data,
+            context: document.body,
+            success: function(json_data){
+              $( "#guardar<%= @rand %>" ).button( "enable" )
+              if (json_data.id){
+                $("#texto_error").html("");
+                tab_selected.click();
+                <% if (@factura.id==nil) %>
+                  closeIframe("/facturas/new");
+                   showIframe("/facturas/"+json_data.id+"/edit","Editar factura",900,600)
+                <%else%>
+                   reloadIframe("/facturas/"+json_data.id +"/edit");
+                <%end%>
+              }else{
+                $("#texto_error").html("");
+                for (var i in json_data){
+                  var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+                  $("#texto_error").html($("#texto_error").html()+error);
+
+                }
+              }
+
+            },
+            error: function( xhr, status, index, anchor ) {
+              $( "#guardar<%= @rand %>" ).button( "enable" )
+              $("#texto_error").html("");
+                var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>0:</strong> Error interno.</p></div><br/>';
+                $("#texto_error").html($("#texto_error").html()+error);
+
+               }
+          });
+          return false;
+  }
+
+  function crear_cliente(seleccion){
+       var data = new Object();
+
+      if (seleccion == 1){
+           data['empresa[nombrereal]'] = $("#buscar_cliente<%= @rand %>").val();
+           data['empresa[nombrefiscal]'] =	$("#buscar_cliente<%= @rand %>").val();
+           data['empresa[nif]'] = $( "#factura_rut" ).val();
+           data['empresa[domicilio]'] =	$( "#factura_direccion_cliente" ).val();
+
+           data['empresa[pdescuento]'] = 0;
+           data['empresa[habilitado]'] = true;
+
+           if ($("#contador:checked").length > 0) {
+             data['empresa[credito]'] =	false;
+           }else{
+             data['empresa[precargo]'] = 0;
+             data['empresa[urecargo]'] = fact_pgcred_unidad;
+             data['empresa[cantrecargo]'] = fact_pgcred_cantidad;
+             data['empresa[credito]'] =	true;
+           }
+
+           data["utf8"] =	true;
+           $.ajax({
+             type: "POST",
+             url: "/empresas.json/",
+             data: data,
+             context: document.body,
+             success: function(json_data){
+               if (json_data.id){
+                    cliente_id_factura = json_data.id;
+                    registrar_factura();
+               }else{
+                 $( "#guardar<%= @rand %>" ).button( "enable" );
+                 $("#texto_error").html("");
+                 for (var i in json_data){
+                   var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+                   $("#texto_error").html($("#texto_error").html()+error);
+
+                 }
+
+               }
+
+             },
+             error: function( xhr, status, index, anchor ) {
+                $( "#guardar<%= @rand %>" ).button( "enable" );
+                $("#texto_error").html("");
+
+                var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>0:</strong>Error Interno</p></div><br/>';
+                $("#texto_error").html($("#texto_error").html()+error);
+
+
+             }
+           });
+
+
+       } else {
+          data['persona[nombre]'] =	$("#buscar_cliente<%= @rand %>").val();
+          data['persona[domicilio]'] =	$( "#factura_direccion_cliente" ).val();
+          data['persona[habilitado]'] =	true;
+          data['persona[nic]'] =	$( "#factura_rut" ).val();
+          data['persona[pdescuento]'] =	0;
+
+          if ($("#contador:checked").length > 0) {
+             data['persona[credito]'] =	false;
+           }else{
+             data['persona[precargo]'] = 0;
+             data['persona[urecargo]'] = fact_pgcred_unidad;
+             data['persona[cantrecargo]'] = fact_pgcred_cantidad;
+             data['persona[credito]'] =	true;
+           }
+
+          data['commit'] =	"Create Persona";
+          data["utf8"] =	true;
+          $.ajax({
+            type: "POST",
+            url: "/personas.json/",
+            data: data,
+            context: document.body,
+            success: function(json_data){
+              if (json_data.id){
+                    cliente_id_factura = json_data.id;
+                    registrar_factura();
+              }else{
+                $( "#guardar<%= @rand %>" ).button( "enable" );
+                $("#texto_error").html("");
+                for (var i in json_data){
+                  var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+                  $("#texto_error").html($("#texto_error").html()+error);
+
+                }
+              }
+
+            },
+            error: function( xhr, status, index, anchor ) {
+              $( "#guardar<%= @rand %>" ).button( "enable" );
+              $("#texto_error").html("");
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>Error:</strong> Error interno.</p></div><br/>';
+              $("#texto_error").html($("#texto_error").html()+error);
+            }
+          });
+       }
+
+  }
+  // Agregooooo
+
+      /*
+      $(document).ready(function() {
+        $("#dialog").dialog({
+          autoOpen: false,
+          modal: true
+        });
+      });
+      */
+    <%if (@factura.id==nil)%>
+        iFrames["/facturas/new"].keypress(function(e){
+            if(e.keyCode == conf_ingf_key){
+                $("#guardar<%= @rand %>").click();
+            }
+         });
+    <%else%>
+        iFrames["/facturas/<%= @factura.id %>/edit"].keypress(function(e){
+            if(e.keyCode == conf_ingf_key){
+                $("#guardar<%= @rand %>").click();
+            }
+         });
+    <%end%>
+
+    $(".confirmLink").click(function(e) {
+        e.preventDefault();
+        var targetUrl = $(this).attr("href");
+
+        $("#dialog").dialog({
+          buttons : {
+            "Agregar cliente como Empresa y guardar Factura" : function() {
+              window.location.href = targetUrl;
+            },
+            "Agregar cliente como Persona y guardar Factura" : function() {
+              $(this).dialog("close");
+            },
+            "Volver y seleccionar un clinte" : function() {
+              $(this).dialog("close");
+            }
+          }
+        });
+
+        //$("#dialog").dialog("open");
+     });
+
+      // Agregoooo hasta aca
+
+  function recargardespuesdeimprimir(){
+      if (conf_recargar_o_cerrar_desp_imp == 0){
+         tab_selected.click();
+         reloadIframe("/facturas/<%= @factura.id %>/edit");
+         $('#imprimir_factura').dialog('close');
+      }else{
+         $('#imprimir_factura').dialog('close');
+         tab_selected.click();
+         closeIframe("/facturas/<%= @factura.id %>/edit");
+      }
+  }
+
+
+  $(function() {
+    <%if (@factura.id==nil)%>
+        $("#buscar_cliente<%= @rand %>").focus();
+
+        $("#creditor").attr('checked',true);
+        $( "#contador" ).button( "refresh" );
+
+
+    <%end%>
+
+    $( this ).keypress(function(e){
+      if(e.keyCode == conf_imp_key){
+        <%if (@factura.id!=nil)%>
+          $("#imprimir<%= @rand %>").click();
+        <%end%>
+      }
+    });
+
+    $( "#factura_rut" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+     $( "#factura_direccion_cliente" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+     $( "#factura_detalle" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+
+    $("#anular<%= @rand %>").button();
+    $("#anular<%= @rand %>").click(function(){
+       $( "#anular<%= @rand %>" ).button( "disable" );
+        $('#anular_dialog').html("Esta seguro que desea anular este documento.");
+        $('#anular_dialog').dialog({
+        resizable: false,
+        height:160,
+        modal: true,
+        buttons: {
+          "Anular": function() {
+            $.ajax({
+              type: "GET",
+              url: "/facturas/anular.json?id=<% if (@factura.id!=nil) %><%= @factura.id %><%end%>",
+              context: document.body,
+              success: function(json_data){
+                $( "#anular<%= @rand %>" ).button( "enable" )
+                if (json_data.id){
+                  $("#texto_error").html("");
+                  reloadIframe("/facturas/<%= @factura.id %>/edit");
+                  tab_selected.click();
+                }else{
+                  $( "#anular<%= @rand %>" ).button( "enable" )
+                  $("#texto_error").html("");
+                  for (var i in json_data){
+                    var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+                    $("#texto_error").html($("#texto_error").html()+error);
+
+                  }
+                }
+
+              },
+              error: function( xhr, status, index, anchor ) {
+                $( "#anular<%= @rand %>" ).button( "enable" )
+                $("#texto_error").html("");
+
+                  var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>0:</strong> Error interno.</p></div><br/>';
+                  $("#texto_error").html($("#texto_error").html()+error);
+
+
+              }
+            });
+            $( this ).dialog( "close" );
+            return false;
+      },
+          "Cancelar": function() {
+            $( "#anular<%= @rand %>" ).button( "enable" )
+            $( this ).dialog( "close" );
+
+          }
+        }
+      });
+    });
+
+    $("#imprimir<%= @rand %>").button({
+      icons: {
+        primary: "ui-icon-print"
+      },
+      text: true
+    });
+<% if (@factura.id!=nil) %>
+      $("#imprimir<%= @rand %>").click(function(){
+
+        var serie = "";
+        var numero = 0;
+        $.ajax({
+          url: "/facturas/proximo_preimpreso.json",
+          context: document.body,
+          success: function(data){
+            numero = data.numero;
+            serie = data.serie;
+            $( "#dialog-confirm-imprimir<%= @rand %>" ).html("Serie:  <input type='text' id='serie<%= @rand %>' value='"+serie+"'></input><br/>Numero  :<input type='text' id='numero<%= @rand %>' value='"+numero+"'></input>");
+            $( "#dialog-confirm-imprimir<%= @rand %>" ).dialog({
+              resizable: false,
+              height:140,
+              modal: true,
+              buttons: {
+                "Usar este numero": function() {
+                  imprimir_factura();
+                },
+                "Cancelar": function() {
+                  $( this ).dialog( "close" );
+                }
+              },
+                open: function () {
+                     $("#numero<%= @rand %>").focus();
+                }
+            });
+
+          }
+        });
+
+      });
+
+   $( "#dialog-confirm-imprimir<%= @rand %>" ).keydown(function (event) {
+        if (event.keyCode == 13) {
+            imprimir_factura();
+        }
+    });
+
+  function imprimir_factura(){
+      numero = $("#numero<%= @rand %>").val();
+      serie = $("#serie<%= @rand %>").val();
+      $( "#dialog-confirm-imprimir<%= @rand %>" ).dialog( "close" );
+
+      $.ajax({
+        url: "/facturas/generar_impresion/?id=<% if (@factura.id!=nil) %><%= @factura.id %><%end%>&serie="+serie+"&numero="+numero,
+        context: document.body,
+        success: function(data){
+          if(data.impresa != true){
+            $.each(data, function(i, item) {
+                alert(data[i]);
+            });
+            //alert("No se pudo imprimir error: El numero de pre impreso ya esta en uso");
+           }else{
+
+              $('#imprimir_factura').dialog({
+                autoOpen: false,
+                width: 600,
+                modal: true,
+                height:400
+              });
+              $('#imprimir_factura').html('');
+              $('#imprimir_factura').html('<div id="altContent"><h1>factura</h1><p><a href="http://www.adobe.com/go/getflashplayer">Get Adobe Flash player</a></p></div>');
+              $('#imprimir_factura').dialog({ title: 'Imprimir Factura' });
+              $('#imprimir_factura').dialog('open');
+              $('#imprimir_factura').dialog({height: 120});
+              $('#imprimir_factura').dialog({width: 200});
+
+              var flashvars = {
+                id:"<% if (@factura.id!=nil) %><%= @factura.id %><%end%>",
+                tipo_factura:<%if @factura.contado || @factura.contado == nil %>"FACTURA CONTADO"<% else %>"FACTURA CREDITO"<%  end %>,
+                controler:'facturas'
+              };
+              var params = {
+                menu: "false",
+                scale: "noScale",
+                allowFullscreen: "true",
+                allowScriptAccess: "always",
+                bgcolor: "",
+                wmode: "direct" // can cause issues with FP settings & webcam
+              };
+              var attributes = {
+                id:"imprimir_factura"
+              };
+
+              swfobject.embedSWF(
+              "swf/factura.swf",
+              "altContent", "100%", "100%", "10.0.0",
+              "swf/expressInstall.swf",
+              flashvars, params, attributes);
+              //  $('#imprimir_factura').dialog('close');
+            }
+        }
+      })
+
+
+    }
+
+<% end  %>
+    $( "#radio_contado" ).buttonset();
+    var day = $( "#factura_fecha" ).val();
+<%if !@factura.contado || @factura.contado.nil? %>
+      $( "#pagocontado" ).hide();
+//      $( "#cont_factura_moneda" ).hide();
+
+<%else%>
+      //   $( "#todosClientes" ).hide( );
+      $("#pagoacredito").hide( );
+      $("#cred_factura_moneda" ).hide();
+<%end%>
+
+    $(".ratio_pago").click(function(){
+
+      if ($("#contador:checked").length > 0) {
+
+        $("#pagoacredito").hide("Highlight");
+        $("#pagocontado").show( "Highlight");
+
+        $( "#cont_factura_moneda" ).show();
+        $( "#cred_factura_moneda" ).hide();
+
+      }
+      else {
+
+        $("#pagocontado").hide( "Highlight");
+        $("#pagoacredito").show( "Highlight");
+
+        $( "#cont_factura_moneda" ).hide();
+        $( "#cred_factura_moneda" ).show();
+
+      }
+    });
+
+   <% if @factura.anulada %>
+      $("#imprimir<%= @rand %>").hide();
+      $("#anular<%= @rand %>").hide();
+   <% end %>
+
+
+    $( "#factura_fecha" ).datepicker( $.datepicker.regional[ "es" ] );
+    $( "#factura_fecha" ).datepicker( "option", "dateFormat","yy-mm-dd" );
+    $( "#factura_fecha" ).val(day);
+    $( "#guardar<%= @rand %>" ).button();
+    $( "#guardar<%= @rand %>" ).click(function() {
+
+      $(this).button( "disable" );
+
+      var seleccion = 0;
+
+      if (cliente_id_factura != -1){
+        registrar_factura();
+      }else{
+
+        $("#dialog_cnr").html("Desea registrar un nuevo cliente como Empresa o Persona?");
+
+          $("#dialog_cnr").dialog({
+
+              buttons : {
+                "Empresa" : function() {
+                  seleccion = 1;
+                  $(this).dialog("close");
+                  crear_cliente(1);
+                },
+                "Persona" : function() {
+                  seleccion = 2;
+                  $(this).dialog("close");
+                  crear_cliente(2);
+                },
+                "Volver" : function() {
+                  $(this).dialog("close");
+                }
+              },
+            close: function(event, ui){
+                $( "#guardar<%= @rand %>" ).button( "enable" );
+                }
+              }
+          );
+      }
+
+
+      //$(this).button( "enable" )
+    });
+
+    $( "#buscar_cliente<%= @rand %>" ).keyup(function(e){
+        if((e.keyCode >= 45 && e.keyCode <= 90) || (e.keyCode >= 96 && e.keyCode <= 111) || (e.keyCode >= 186 && e.keyCode <= 222)){
+            cliente_id_factura = -1;
+        }
+    })
+
+    $( "#buscar_cliente<%= @rand %>" ).autocomplete({
+      source: function( request, response ) {
+
+        $.ajax({
+          url: "empresas.json?filtro="+request.term+"&contado="+$("#contador:checked").length,
+          success: function( data ) {
+
+            if(data.empresas.length == 0 && data.sucursales.length == 0 &&  data.personas.length == 0){
+              data = [{
+                  id :-1
+                }];
+            }else{
+
+              var aux = new Array();
+              data = aux.concat(data.empresas,data.sucursales,data.personas);
+
+            }
+            response( $.map( data, function( item ) {
+
+              if (item.id == -1){
+                return {
+                  label: "no se encotraron resultados" ,
+                  value: request.term,
+                  id :item.id
+                }
+              }else{
+                if (item.empresa){
+
+                  if (conf_view_cli == 0){
+                      return {
+                        label: "<" + item.id + ">" + item.nombre + " ["+ item.empresa.nombre+"]" ,
+                        value: "<" + item.id + ">" + item.nombre + " ["+ item.empresa.nombre+"]",
+                        id: item.empresa.id,
+                        sucursal_id : item.id,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                        rut : item.empresa.nif
+
+                      }
+                  }else{
+                      return {
+                        label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                        value: item.nombre,
+                        id: item.empresa.id,
+                        sucursal_id : item.id,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                        rut : item.empresa.nif
+
+                      }
+                  }
+                }else{
+                    if (conf_view_cli == 0){
+                      return {
+                        label: "<" + item.id + ">" + item.nombre ,
+                        value: "<" + item.id + ">" + item.nombre,
+                        id :item.id,
+                        sucursal_id : -1,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre,
+                        rut : item.nif
+
+                      }
+                    }else{
+                        if(item.type == "Persona"){
+                           return {
+                            label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"] Persona física",
+                            value: item.nombre,
+                            id :item.id,
+                            sucursal_id : -1,
+                            domicilio : item.domicilio,
+                            nombre :item.nombre,
+                            rut : item.nif
+
+                          }
+                        }else{
+                           return {
+                            label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]", //Casa central",
+                            value: item.nombre,
+                            id :item.id,
+                            sucursal_id : -1,
+                            domicilio : item.domicilio,
+                            nombre :item.nombre,
+                            rut : item.nif
+
+                          }
+                        }
+                    }
+                }
+              }
+            })
+          );
+          },
+          error: function( xhr, status, index, anchor ) {
+            return {
+              label: 'no se econtro reultado' ,
+              value: request.term,
+              id :-1
+            }
+          }
+        });
+      },
+      minLength: 1,
+      select: function( event, ui ) {
+        if(ui.item.id != -1){
+          // showIframe("/empresas/"+ui.item.id+"/edit","Editar Empresa",960,600);
+          sucursal_id =  ui.item.sucursal_id;
+          $( "#factura_rut" ).val( ui.item.rut);
+          $( "#factura_direccion_cliente" ).val(ui.item.domicilio);
+          cliente_id_factura =(ui.item.id);
+          setTimeout(
+                  function(){
+                      $( "#factura_detalle" ).focus();
+                  },100);
+        }
+      },
+      open: function() {
+        $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+      },
+      close: function() {
+        $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+      }
+    });
+
+    $( ".cliente_factura" ).change(function(){
+      var url =   "/empresas/"+$( this ).val()+".json";
+      $.ajax({
+        url: url,
+        success: function(json_data){
+          if(json_data.id != -1){
+            $( "#factura_rut" ).val( json_data.nif);
+            $( "#factura_direccion_cliente" ).val(json_data.domicilio);
+            $( "#factura_comerciante_id" ).val(json_data.id);
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+
+        }
+      });
+
+    });
+    $("#mostrar_cliente").button({
+      icons: {
+        primary: "ui-icon-circle-triangle-e"
+      },
+      text: false
+    });
+    $("#mostrar_cliente").click(function(){
+    <%if @factura.id %>
+            showIframe("/<%=@factura.comerciante.class.name.downcase%>s/<%= @factura.comerciante_id %>>/edit");
+    <%end%>
+    });
+  });
+
+
+$( "#pago_contado" ).change(function(){
+
+      if($( "#pago_contado" ).val() != ""){
+        $.ajax({
+          type: "GET",
+          url: "/pagocontados/"+$( "#pago_contado" ).val()+".json",
+          context: document.body,
+          success: function(json_data){
+            $( "#cont_moneda_id" ).html("");
+           
+            for (var i in json_data.moneda){
+                $( "#cont_moneda_id" ).append(
+                $('<option value="'+json_data.moneda[i].id+'">'+json_data.moneda[i].nombre+'</option>')
+                );
+           }
+          }
+        });
+        }
+  });
+
+  $( "#pago_credito" ).change(function(){
+
+      if($( "#pago_credito" ).val() != ""){
+        $.ajax({
+          type: "GET",
+          url: "/pagoacreditos/"+$( "#pago_credito" ).val()+".json",
+          context: document.body,
+          success: function(json_data){
+            fact_pgcred_cantidad = json_data.cantidad;
+            fact_pgcred_unidad = json_data.unidad;
+            $( "#cred_moneda_id" ).html("");
+            $( "#cred_moneda_id" ).append(
+            $('<option value="-1">seleccione una moneda credito</option>'));
+            for (var i in json_data.moneda){
+                $( "#cred_moneda_id" ).append(
+                $('<option value="'+json_data.moneda[i].id+'">'+json_data.moneda[i].nombre+'</option>')
+                );
+           }
+          }
+        });
+        }
+  });
+
+
+  $( "#cred_moneda_id" ).change(function(){
+
+      <%if @factura.id %>
+          if($( "#cred_moneda_id" ).val() != ""){
+            tipocambio = <%= @factura.moneda.tipodecambio %>;
+            // no se como usar la función  actualizar_moneda de la clase Factura
+          }
+      <%end%>
+  });
+
+
+</script>
+<%= form_for(@factura) do |f| %>
+  <% if @factura.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@factura.errors.count, "error") %> prohibited this factura from being saved:</h2>
+
+      <ul>
+        <% @factura.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <br/>
+  <br/>
+
+  <div id="texto_error"> </div>
+
+  <div class="field">
+    <div class ="combobox">
+      <div id="radio_contado">
+        <input class="ratio_pago" type="radio" id="contador" name="radio" <%if @factura.contado || @factura.contado == nil %> checked="checked" <% end %>/><label for="contador">Contado</label>
+        <input class="ratio_pago" type="radio" id="creditor" name="radio" <%if !@factura.contado && @factura.contado != nil %> checked="checked" <% end %>/><label for="creditor">credito</label>
+      </div>
+    </div>
+  </div>
+
+  <%if (@factura.id==nil) %>
+      <div  style="position: relative;"><label for="filtro_cliente">Buscar Cliente </label>
+        <div class ="combobox">  <input id="buscar_cliente<%= @rand %>" style="width: 20em;" /></div>
+      </div>
+  <% end %>
+
+  <div class="field" id="pagocontado">
+    <label for="factura_formadepago">Pago contado</label>
+    <%  @contado_query = "1=1"
+        if  !Pagocontado.where("predeterminada = 1")[0].nil?
+          @contado_query = " predeterminada = 1"
+        end
+        @credito_query = "1=1"
+        if  !Pagoacredito.where("predeterminada = 1")[0].nil?
+          @credito_query = " predeterminada = 1"
+        end
+   %>
+   
+    <div class ="combobox"> <%= f.collection_select(:formadepago_id,Pagocontado.all, :id  , :nombre, { :selected => Pagocontado.where(@contado_query)[0].id}, :class =>  'text ui-widget-content ui-corner-all', :id => 'pago_contado') %></div>
+  </div>
+
+  <div class="field" id="pagoacredito">
+    <label for="factura_formadepago">Pago credito</label>
+    <div class ="combobox"> <%= f.collection_select(:formadepago_id,Pagoacredito.all, :id, :nombre, { :selected => Pagoacredito.where(@credito_query)[0].id},:class =>  'text ui-widget-content ui-corner-all', :id => 'pago_credito' ) %></div>
+  </div>
+
+  <div class="field" id="cont_factura_moneda" >
+    <label for="factura_moneda">Moneda</label>
+      <div class ="combobox"> <%= f.collection_select(:moneda_id,Pagocontado.where(@contado_query)[0].moneda, :id  , :nombre, {:prompt => false}, :id => 'cont_moneda_id', :class =>  'text ui-widget-content ui-corner-all') %></div>
+  </div>
+
+  <div class="field" id="cred_factura_moneda" style="display:none;">
+    <label for="factura_moneda">Moneda</label>
+    <div class ="combobox">    <%= f.collection_select(:moneda_id,Pagoacredito.where(@credito_query)[0].moneda, :id  , :nombre, {:prompt => false}, :class =>  'text ui-widget-content ui-corner-all', :id => 'cred_moneda_id') %></div>
+  </div>
+
+
+  <% if(@factura.id!=nil) %>
+    <div class="field">
+      <%= f.label :numero %>
+      <div class ="combobox"> <%= f.label !@factura.numero.nil? ? @factura.numero : " " %></div>
+      <br>
+    </div>
+  <% end %>
+
+  <%if @factura.id%>
+    <div class="field" id="clienteCredito">
+     <%= f.label :cliente %><div class ="combobox"><label><%=  @factura.comerciante.nombre  %></label><% if @factura.sucursal_id %> <br/>[<label><%= @factura.sucursal.nombre%></label>]<% end %><a id="mostrar_cliente" >Ver Cliente</a></div>
+    </div>
+    <div class="field" id="clienteCredito">
+      <%if !@factura.contado   %>
+       <%= f.label :adeudo %><div class ="combobox"><%=  @factura.adeudo %></div>
+      <% end %>
+    </div>
+  <%end%>
+
+  <div class="field">
+    <%= f.label :rut %>
+    <div class ="combobox">  <%= f.text_field :rut , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+  </div>
+
+  <div class="field">
+    <label for="factura_direccion_cliente">Direcci&oacute;n cliente</label>
+    <div class ="combobox">  <%= f.text_field :direccion_cliente , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :comentario %>
+    <div class ="combobox"> <%= f.text_field :detalle, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :fecha %>
+    <%if (!@factura.id.nil?) %>
+      <div class ="combobox"> <%= f.text_field :fecha, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+    <%else%>
+      <div class ="combobox"> <%= f.text_field :fecha,:value => Time.now.strftime("%Y-%m-%d"), :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+    <%end;%>
+  </div>
+
+  <div class="actions" >
+    <%if (@factura.id.nil?) %>
+      <a id="guardar<%= @rand %>"><%if (@factura.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+    <%else%>
+      <%if (!@factura.impresa) %>
+       <a id="guardar<%= @rand %>"><%if (@factura.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+      <%end%>
+    <%end%>
+    <%if (@factura.id!=nil) %>
+      <%if (@factura.impresa and @factura.anulable) %>
+        <span id ="anular<%= @rand %>">Anular</span>
+      <%end%>
+      <span id ="imprimir<%= @rand %>"> <%if (@factura.impresa) %>Re Imprimir<%else%>Imprimir Factura<%end%></span>
+    <% end %>
+    <%if (@factura.id!=nil)&&(@factura.anulada) %>
+        <span style="color: red; font-size: 1.2em;"> Anulada</span>
+    <% end %>
+  </div>
+
+  <div id="imprimir_factura"></div>
+ 
+  <div id="dialog-confirm-imprimir<%= @rand %>"></div>
+
+  <div id="dialog_cnr" title="El cliente no est&aacute; registrado" style="display: none;"> </div>
+<div id="anular_dialog" title="Anular"></div>
+
+<% end %>

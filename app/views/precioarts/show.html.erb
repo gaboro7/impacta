@@ -1,0 +1,25 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Precio:</b>
+  <%= @precioart.precio %>
+</p>
+
+<p>
+  <b>Descuento:</b>
+  <%= @precioart.descuento %>
+</p>
+
+<p>
+  <b>Comercializable:</b>
+  <%= @precioart.comercializable %>
+</p>
+
+<p>
+  <b>Listaprecio:</b>
+  <%= @precioart.listaprecio %>
+</p>
+
+
+<%= link_to 'Edit', edit_precioart_path(@precioart) %> |
+<%= link_to 'Back', precioarts_path %>

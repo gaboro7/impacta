@@ -1,0 +1,76 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>contado:</b>
+  <%= @factura.contado %>
+</p>
+
+<p>
+  <b>Cliente:</b>
+  <%= @factura.comerciante_id %>
+  <%= @factura.comerciante_type %>
+</p>
+
+<p>
+  <b>Rut:</b>
+  <%= @factura.rut %>
+</p>
+
+<p>
+  <b>Direccion cliente:</b>
+  <%= @factura.direccion_cliente %>
+</p>
+
+<p>
+  <b>Confirmada:</b>
+  <%= @factura.confirmada %>
+</p>
+
+<p>
+  <b>Contabilizada:</b>
+  <%= @factura.contabilizada %>
+</p>
+
+<p>
+  <b>Anulada:</b>
+  <%= @factura.anulada %>
+</p>
+
+<p>
+  <b>Detalle:</b>
+  <%= @factura.detalle %>
+</p>
+
+<% for reng in @factura.renglon_facturas
+           @renglon_factura = reng%>
+<%= render :template => "renglon_facturas/edit" %>
+<% end %>
+
+<%#*<p>%>
+  <%#*<b>Total n gravado:</b>%>
+  <%#= @factura.total_n_gravado %>
+<%#*</p>%>
+
+<%#*<p>%>
+  <%#*<b>Total gravado:</b>%>
+  <%#= @factura.total_gravado %>
+<%#*</p>%>
+
+<%#*<p>%>
+  <%#*<b>Total impuestos:</b>%>
+  <%#= @factura.total_impuestos %>
+<%#*</p>%>
+
+<%#*<p>%>
+  <%#*<b>Total final:</b>%>
+  <%#= @factura.total_final %>
+<%#*</p>%>
+
+<p>
+  <b>Fecha:</b>
+  <%= @factura.fecha %>
+</p>
+
+
+<%= link_to 'Edit', edit_factura_path(@factura) %> |
+<%= link_to 'Back', facturas_path %>

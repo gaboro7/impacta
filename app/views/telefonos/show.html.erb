@@ -1,0 +1,15 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Telefono:</b>
+  <%= @telefono.telefono %>
+</p>
+
+
+<%= if @telefono.cliente.class.name == "Empresa"
+    link_to 'Edit', edit_empresa_telefono_path(@telefono.cliente, @telefono)
+  elsif telefono.cliente.class.name == "Persona"
+    link_to 'Edit', edit_persona_telefono_path(@telefono.cliente, @telefono)
+  end
+%>
+<%= link_to 'Back', @telefono.cliente %>

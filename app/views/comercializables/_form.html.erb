@@ -1,0 +1,47 @@
+
+<%= form_for([@rola,Comercializable.new]) do |f| %>
+  <% if @rola.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@rola.errors.count, "error") %> prohibited this comercializable from being saved:</h2>
+
+      <ul>
+      <% @rola.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :descuento %><br />
+    <%= f.text_field :descuento %>
+  </div>
+  <div class="field">
+    <%= f.label :garantia %><br />
+    <%= f.number_field :garantia %>
+  </div>
+
+
+ <div class="field" >
+    <%= f.label :impuestos %><br />
+    <% for imp in Impuesto.all %>
+        <%= check_box_tag "comercializable[impuesto_ids][]", imp.id, @comercializable.impuesto.include?(imp) %>
+        <%= label_tag "comercializable[impuesto_ids][]", imp.id, :for => "comercializable[impuesto_ids][]" %><br />
+    <% end %>
+  </div>
+
+
+  <div class="field" >
+    <%= f.label :promociones %><br />
+    <% for promo in Promocion.all %>
+        <%= check_box_tag "comercializable[promocion_ids][]", promo.nombre, @comercializable.promocions.include?(pr.id) %>
+        <%= label_tag "comercializable[promocion_ids][]", promo.id, :for => "comercializable[promocion_ids][]" %><br />
+    <% end %>
+  </div>
+
+
+
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

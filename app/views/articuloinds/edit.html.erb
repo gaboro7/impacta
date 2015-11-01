@@ -1,0 +1,25 @@
+<script>
+	$(function() {
+		$( "#tabs-comerciales" ).tabs();
+	});
+	</script>
+
+<%= render 'form' %>
+<% @rola = @articuloind %>
+
+<br/>
+<div id="tabs-comerciales">
+  <ul>
+		<li><a href="#tabs-comerciales-sub">Datos comerciales</a></li>
+  </ul>
+  <div id ="tabs-comerciales-sub">
+<% for c in @articuloind.rolarticulos 
+    @rol = c
+    %>  
+<%=    render :template =>  "comercializables/edit" %>
+
+<% end %>
+    </div>
+</div>
+
+

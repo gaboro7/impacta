@@ -1,0 +1,8 @@
+<tr>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_recdetalle.factura_id %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_recdetalle.detalle %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= ((renglon_recdetalle.total_renglon)*100).round/100.0 %></th>
+  <th  class="ui-state-default ui-corner-all"><a href ="#" data="/recibos/<%=renglon_recdetalle.recibo.id%>/renglon_recdetalles/<%=  renglon_recdetalle.id %>/edit" dataw="600"  datah="600" class="edit_sub_link<%=@randa%>" title="Editar Linea"><span class="ui-icon ui-icon-wrench"></span></a></th>
+  <th  class="ui-state-default ui-corner-all"><a href="#" action="/recibos/<%=renglon_recdetalle.recibo.id%>/renglon_recdetalles/<%=  renglon_recdetalle.id %>" class="delete_sub_list<%=@randa%>" data-method="delete" title="Eliminar Linea"><span class="ui-icon ui-icon-trash"></span></a></th>
+
+</tr>

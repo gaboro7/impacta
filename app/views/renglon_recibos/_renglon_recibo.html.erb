@@ -1,0 +1,6 @@
+<tr>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_recibo.factura.numero %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= ((renglon_recibo.total_renglon)*100).round/100.0 %></th>
+  <th  class="ui-state-default ui-corner-all"><a href ="#" data="/recibos/<%=renglon_recibo.recibo.id%>/renglon_recibos/<%=  renglon_recibo.id %>/edit" dataw="600"  datah="600" class="edit_sub_link<%=@randa%>" title="Editar Linea"><span class="ui-icon ui-icon-wrench"></span></a></th>
+  <th  class="ui-state-default ui-corner-all"><a href="#" action="/recibos/<%=renglon_recibo.recibo.id%>/renglon_recibos/<%=  renglon_recibo.id %>" class="delete_sub_list<%=@randa%>" data-method="delete" title="Eliminar Linea"><span class="ui-icon ui-icon-trash"></span></a></th>
+</tr>

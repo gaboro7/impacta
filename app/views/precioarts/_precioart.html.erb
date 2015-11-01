@@ -1,0 +1,16 @@
+<tr>
+    <td class="ui-state-default ui-corner-all"><% if(precioart.comercializable!=nil) %>
+                                               <%=   precioart.comercializable.id %>
+                                               <% end; %></td>
+    <td class="ui-state-default ui-corner-all"><% if(precioart.comercializable!=nil) %>
+                                               <%=   precioart.comercializable.nombreart %>
+                                               <% end; %></td>
+    <td class="ui-state-default ui-corner-all"><%= precioart.precio %></td>
+    <td class="ui-state-default ui-corner-all"><%= precioart.descuento %></td>
+
+
+    <td class="ui-state-default ui-corner-all"><a href ="#" data="/listaprecios/<%=  @listaprecio.id %>/precioarts/<%=precioart.id%>/edit" dataw="590"  datah="200" class="edit_sub_link" title="Editar promocion"><span class="ui-icon ui-icon-wrench"></span></a></td>
+    <td class="ui-state-default ui-corner-all"><a href="#" action="/listaprecios/<%=  @listaprecio.id %>/precioarts/<%=precioart.id%>" class="delete_sub_list"  title="Eliminar precio articulo"><span class="ui-icon ui-icon-trash"></span></a></td>
+   
+</tr>
+

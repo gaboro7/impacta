@@ -1,0 +1,73 @@
+<% @int = "_tipocliente" %>
+
+<%= render 'form' %>
+
+<script>
+  $(function() {
+    $( "#tabs-inner<%=@int%>" ).tabs();
+
+    $(".edit_sub_link").click(function(){
+      showIframe($(this).attr("data"), $(this).attr("title"),$(this).attr("dataw"),$(this).attr("datah"))
+
+    });
+    $(".delete_sub_list").click(function(){
+      var url = $(this).attr("action");
+      $('#ventana-borrar-interna<%=@int%>').html($(this).attr("title"));
+      $('#ventana-borrar-interna<%=@int%>').dialog({
+        resizable: false,
+        height:160,
+        modal: true,
+        buttons: {
+          "Borrar": function() {
+            var data = new Object();
+            var this_false = $( this );
+            data["_method"] = "delete";
+            $.ajax({
+              type: "POST",
+              url: url,
+              data: data,
+              context: document.body,
+              success: function(html_data){
+                this_false.dialog( "close" );
+                reloadIframe("/tipoclientes/<%=  @tipocliente.id%>/edit",inner_tab);
+
+              }
+            });
+          },
+          "Cancelar": function() {
+            $( this ).dialog( "close" );
+          }
+        }
+      });
+    });
+  });
+</script>
+
+<div style="position: absolute;left: 20px;top: 100px; width: 450px">
+  <div id="tabs-inner<%=@int%>">
+    <ul>
+      <li><a href="#tabs-2<%=@int%>">e-mails</a></li>
+    </ul>
+
+    <div id="tabs-2<%=@int%>" >
+      <b>Listado de e-mails:</b>
+      <% @conmail = @tipocliente %>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> e-mail </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <%= render @tipocliente.mail_internos %>
+      </table>
+
+      <div id="modificar_mails"></div>
+        <h3>Agregar e-mail:</h3>
+        <%= render "mail_internos/form" %>
+      </div>
+
+    </div>
+</div>
+
+<div id="ventana-borrar-interna<%=@int%>"></div>
+

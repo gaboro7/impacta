@@ -1,0 +1,39 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Nombre:</b>
+  <%= @contacto.nombre %>
+</p>
+
+<p>
+  <b>Sector:</b>
+  <%= @contacto.sector %>
+</p>
+
+<p>
+  <b>Interno:</b>
+  <%= @contacto.interno %>
+</p>
+
+<p>
+  <b>Comentarios:</b>
+  <%= @contacto.comentarios %>
+</p>
+
+
+<%= link_to 'Edit',
+  if @contactable.class.name == "Empresa"
+    edit_empresa_contacto_path(@contacto.contactable, @contacto)
+  elsif @contactable.class.name == "Sucursal"
+    edit_empresa_sucursal_contacto_path(@contacto.contactable.empresa, @contacto.contactable, @contacto)
+  end
+%> |
+
+<%= link_to 'Back',
+  if @contactable.class.name == "Empresa"
+    empresa_path(@contacto.contactable, @contacto)
+  elsif @contactable.class.name == "Sucursal"
+    empresa_sucursal_path(@contacto.contactable.empresa, @contacto.contactable, @contacto)
+  end
+%>
+

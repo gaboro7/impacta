@@ -1,0 +1,24 @@
+<%= form_for(@listaprecio) do |f| %>
+<% if @listaprecio.errors.any? %>
+<div id="error_explanation">
+	<h2><%= pluralize(@listaprecio.errors.count, "error") %> prohibited this listaprecio from being saved:</h2>
+	<ul>
+		<% @listaprecio.errors.full_messages.each do |msg| %>
+		<li>
+			<%= msg %>
+		</li>
+		<% end %>
+	</ul>
+</div>
+<% end %>
+<div class="field">
+	<%= f.label :lista %>
+	<br />
+	<%= f.text_field :nombre %>
+</div>
+<% end %>
+
+<% 	@lp = @listaprecio %>
+<%= render "precioarts/editcom" %>
+
+

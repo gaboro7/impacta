@@ -1,0 +1,104 @@
+<%= @rand = "" %>
+
+  <%  @rand = (0...8).map{65.+(rand(25)).chr}.join %>
+
+<script>
+
+  $(function() {
+
+   
+
+
+    $( "#guardar<%=@rand%>" ).button();
+    $( "#guardar<%=@rand%>" ).click(function() {
+      $(this).button( "disable" )
+      var data = new Object();
+<% if(@renglon_recibo_doc.id!=nil) %>
+        data["_method"] =	"put";
+<% end; %>
+      data['renglon_recibo_doc[documento_id]']    =	$( "#documento_id<%=@rand%>" ).val();
+      data['renglon_recibo_doc[documento_type]']  =	$( "#documento_type<%=@rand%>" ).val();
+      data['renglon_recibo_doc[total_renglon]']   =	$( "#total_renglon<%=@rand%>" ).val();
+      //data['renglon_recibo_doc[total_impuestos]'] =	$( "#total_impuestos<%=@rand%>" ).val();
+      data['renglon_recibo_doc[detalle]']         =	$( "#detalle<%=@rand%>" ).val();
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/recibos/<%= @recibo.id %>/renglon_recibo_docs<% if (@renglon_recibo_doc==nil) %>.json<% else %>/<%= @renglon_recibo_doc.id %>.json<%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar<%=@rand%>" ).button( "enable" )
+          if (json_data.id){
+            $("#texto_error").html("");
+            tab_selected.click();
+            <% if(@renglon_recibo_doc.id!=nil) %>
+            reloadIframe("/recibos/<%=@renglon_recibo_doc.recibo_id %>/renglon_recibo_docs/<%=@renglon_recibo_doc.id%>/edit");
+            <% end %>
+             reloadIframe("/recibos/<%=@renglon_recibo_doc.recibo_id %>/edit");
+          }else{
+            $("#texto_error<%=@rand%>").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error<%=@rand%>").html($("#texto_error").html()+error);
+
+            }
+          }
+
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar<%=@rand%>" ).button( "enable" )
+          $("#texto_error<%=@rand%>").html("");
+          var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>0: </strong>Error interno.</p></div><br/>';
+          $("#texto_error<%=@rand%>").html($("#texto_error").html()+error);
+
+        
+        }
+      });
+      return false;
+    });
+
+  });
+
+</script>
+
+<% if  (@renglon_recibo_doc==nil) %>
+  <% @renglon_recibo_doc = RenglonReciboDoc.new %>
+<% end %>
+
+<%= form_for([@recibo,@renglon_recibo_doc]) do |f| %>
+  <% if @renglon_recibo_doc.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@renglon_recibo_doc.errors.count, "error") %> prohibited this renglon_recibo_doc from being saved:</h2>
+
+      <ul>
+      <% @renglon_recibo_doc.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+  
+
+  <div id ="texto_error<%=@rand%>"></div>
+  <%= f.hidden_field :documento_id, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => "documento_id"+@rand.to_s %>
+  <%= f.hidden_field :documento_type, :size =>20, :class =>  'text ui-widget-content ui-corner-all',  :id => "documento_type"+@rand.to_s %>
+
+  <div class="field">
+    <%= f.label "Tipo de Documento" %><br />
+     <div class ="combobox"><%= f.label @renglon_recibo_doc.documento_type %> </div>
+  </div>
+  <div class="field">
+    <%= f.label :total_renglon %><br />
+    <div class ="combobox"> <%= f.text_field :total_renglon, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => "total_renglon"+@rand.to_s %></div>
+  </div>
+ 
+  <div class="field">
+    <%= f.label :detalle %><br />
+    <div class ="combobox"> <%= f.text_field :detalle , :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => "detalle"+@rand.to_s%></div>
+  </div>
+  <br/>
+  <div class="actions" >
+    <a id="guardar<%=@rand%>"><%if (@renglon_recibo_doc.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end%> </a>
+  </div>
+<% end %>

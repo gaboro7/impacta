@@ -1,0 +1,35 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Cr&eacute;dito:</b>
+  <%= @cliente.credito %>
+</p>
+
+<p>
+  <b>Precargo:</b>
+  <%= @cliente.precargo %>
+</p>
+
+<p>
+  <b>Urecargo:</b>
+  <%= @cliente.urecargo %>
+</p>
+
+<p>
+  <b>Trecargo:</b>
+  <%= @cliente.trecargo %>
+</p>
+
+<p>
+  <b>Pdescuento:</b>
+  <%= @cliente.pdescuento %>
+</p>
+
+<p>
+  <b>Habilitado:</b>
+  <%= @cliente.habilitado %>
+</p>
+
+
+<%= link_to 'Edit', edit_cliente_path(@cliente) %> |
+<%= link_to 'Back', clientes_path %>

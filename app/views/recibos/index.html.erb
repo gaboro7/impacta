@@ -1,0 +1,268 @@
+<% if params[:numero_hoja].nil? %>
+<script type="text/javascript">
+  $(function() {
+    var dates = $( "#from, #to" ).datepicker({
+      changeMonth: true,
+      changeYear: true,
+      onSelect: function( selectedDate ) {
+        var option = this.id == "from" ? "minDate" : "maxDate",
+        instance = $( this ).data( "datepicker" ),
+        date = $.datepicker.parseDate(
+        instance.settings.dateFormat ||
+          $.datepicker._defaults.dateFormat,
+        selectedDate, instance.settings );
+        dates.not( this ).datepicker( "option", option, date );
+      }
+    });
+    $( "#radio" ).buttonset();
+
+  });
+
+  $("#send-query").click(function(){
+    var tipo= $('input:radio:checked').attr("id");
+    var from = $( "#from" ).val();
+    var to = $("#to").val();
+    $.ajax({
+
+      url: "recibos/filtered.html?tipo="+tipo+"&cliente="+cliente_id+"&desde="+from+"&hasta="+ to+"&sucursal="+sucursal_id,
+      success: function( data ) {
+        $("#listado").html('<p align ="center"><img  src="/images/ajax-loader.gif" /></p>');
+        $("#listado").html(data);
+      },
+      error: function( xhr, status, index, anchor ) {
+        alert("error");
+      }
+    });
+
+
+  });
+
+  $("#filter-options").hide();
+  $("#more-filters").button( {icons: {
+      primary: "ui-icon-plusthick"
+    }
+  });
+
+  $("#send-query").button( );
+  var animation = false;
+
+  $("#more-filters").click(function(){
+
+    if (!animation){
+      animation = true;
+      var change = '+145';
+      if ($("#filter-options").css('display')=="block"){
+        $("#filter-options").hide();
+        change = '+35';
+      }
+      $("#buscar_recibo").animate({
+        height: change
+      }, 500, function() {
+        animation = false;
+        if (change == '+145')
+          $("#filter-options").show();
+      });
+    }
+  });
+
+  $( "#filtro_recibo" ).autocomplete({
+    source: function( request, response ) {
+      $.ajax({
+        url: "recibos.json?filtro="+request.term,
+        success: function( data ) {
+          data = data
+          if(data.length == 0){
+            data = [{
+                id :-1
+              }];
+          }
+          response( $.map( data, function( item ) {
+            if (item.id == -1){
+              return {
+                label: "no se encotraron resultados" ,
+                value: request.term,
+                id :item.id
+              }
+            }else{
+              return {
+                label: item.numero  + " " + ((item.manual)?"Manual":""),
+                value: item.numero  + " " + ((item.manual)?"Manual":""),
+                id :item.id
+              }
+            }
+          })
+        );
+        },
+        error: function( xhr, status, index, anchor ) {
+          return {
+            label: 'no se econtro resultado' ,
+            value: request.term,
+            id :-1
+          }
+        }
+      });
+    },
+    minLength: 1,
+    select: function( event, ui ) {
+      if(ui.item.id != -1)
+        showIframe("/recibos/"+ui.item.id+"/edit","Editar Nota de Debito",1000,600);
+    },
+    open: function() {
+      $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+    },
+    close: function() {
+      $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+    }
+  });
+
+  var cliente_id = -1;
+  var sucursal_id = -1;
+  $( "#filtro_cliente" ).autocomplete({
+    source: function( request, response ) {
+      cliente_id = -1;
+      sucursal_id = -1;
+      $.ajax({
+        url: "empresas.json?filtro="+request.term,
+        success: function( data ) {
+
+            if(data.empresas.length == 0 && data.sucursales.length == 0 &&  data.personas.length == 0){
+              data = [{
+                  id :-1
+                }];
+            }else{
+
+              var aux = new Array();
+              data = aux.concat(data.empresas,data.sucursales,data.personas);
+
+            }
+            response( $.map( data, function( item ) {
+
+              if (item.id == -1){
+                return {
+                  label: "no se encotraron resultados" ,
+                  value: request.term,
+                  id :item.id
+                }
+              }else{
+                if (item.empresa){
+
+                  return {
+                    label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                    value: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                    id: item.empresa.id,
+                    sucursal_id : item.id,
+                    domicilio : item.domicilio,
+                    nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                    rut : item.empresa.nif
+
+                  }
+                }
+                else
+                  return {
+                    label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                    value: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                    id :item.id,
+                    sucursal_id : -1,
+                    domicilio : item.domicilio,
+                    nombre :item.nombre,
+                    rut : item.nif
+
+                  }
+              }
+            })
+          );
+          },
+        error: function( xhr, status, index, anchor ) {
+          cliente_id = -1;
+          return {
+            label: 'no se econtro reultado' ,
+            value: request.term,
+            id :-1
+          }
+        }
+      });
+    },
+    minLength: 1,
+    select: function( event, ui ) {
+     if( ui.item.sucursal_id != -1){
+        sucursal_id =  ui.item.sucursal_id;
+     }
+      if(ui.item.id != -1){
+        cliente_id = ui.item.id;
+      }
+      //showIframe("/empresas/"+ui.item.id+"/edit","Editar Empresa",960,600);
+    },
+    open: function() {
+      $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+    },
+    close: function() {
+      $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+    }
+  });
+</script>
+<br />
+<a class="nuevo" href ="#" data="/recibos/new" dataw="360"  datah="500px" title="Agregar nuevo Recibo">Agregar nuevo Recibo</a>
+<div id="buscar_recibo" style="left: 240px; position: relative; top: -29px; width: 600px; height: 35px; margin-bottom: -48px;">
+  <label for="filtro_recibo">Número: </label>
+  <input id="filtro_recibo" style="width:11em;" class="filtro" />
+  <span id="more-filters" >B&uacute;squeda</span>
+
+  <div id ="filter-options" style="position: relative;left: -240px;top:5px ;border-style:solid;border-width:0.2px; border-color: #FFFFFF; width: 900px; height: 70px; padding: 10px 0 0 10px;">
+      <span class="rango-fecha">
+      <label for="from">Desde</label>
+      <input type="text" id="from" name="from"/>
+      <label for="to">Hasta</label>
+      <input type="text" id="to" name="to"/>
+    </span>
+    <div style ="width:220px;padding: 0px;float: left;">
+      <label for="filtro_cliente">Cliente: </label>
+      <input id="filtro_cliente" style="width:11em;" class="filtro" />
+    </div>
+    <div  style ="width:60px;position: absolute;left: 657px;top:8px;">
+      <span id="send-query" >Filtrar</span>
+    </div>
+  </div>
+</div>
+
+
+
+<div id="listado">
+  <%  else %>
+    <script type="text/javascript">
+      limpiar_paginado();
+    </script>
+<% end %>
+
+
+<br /><br />
+<table>
+  <tr>
+    <th class ="ui-state-active" width ="120">N&uacute;mero</th>
+    <th class ="ui-state-active" width ="270">Cliente</th>
+    <th class ="ui-state-active" width ="200">Estado</th>
+    <th class ="ui-state-active" width ="200">Total</th>
+    <th class ="ui-state-active" width ="120">Moneda</th>
+    <th class ="ui-state-active" width ="200">Fecha</th>
+    <th class ="ui-state-active"></th>
+    <th class ="ui-state-active"></th>
+   
+  </tr>
+
+<% @recibos.each do |recibo| %>
+  <tr>
+    <td class="ui-state-default ui-corner-all"><%= !recibo.numero.nil? ? recibo.numero : " " %></td>
+    <td class="ui-state-default ui-corner-all"><%= recibo.comerciante.nombre %><% if recibo.sucursal %>[<%= recibo.sucursal.nombre %>]<% end %></td>
+    <td  class="ui-state-default ui-corner-all"><%= (recibo.anulada)?"Anulado":(recibo.impresa)?"Impresa":"S/Imprimir" %></td>
+    <td  class="ui-state-default ui-corner-all"><%=  "%.2f"  %recibo.total_sinimpuestos %></td>
+    <td  class="ui-state-default ui-corner-all"><%= recibo.moneda.nombre %></td>
+    <td class="ui-state-default ui-corner-all"><%= recibo.fecha %></td>
+    <td  class="ui-state-default ui-corner-all"><a href ="#" data="<%=edit_recibo_path(recibo) %>" dataw="370"  datah="500px" class="list_link" title="Editar recibo"><span class="ui-icon ui-icon-wrench"></span></a></td>
+    <td  class="ui-state-default ui-corner-all"><a href="#"  data-method="delete" title="Eliminar recibo"><span class="ui-icon ui-icon-trash <%= (recibo.anulada)?"ui-state-disabled":(recibo.impresa)?"ui-state-disabled":"delete_list" %>" action="/recibos/<%=  recibo.id %>"></span></a></td>
+  </tr>
+<% end %>
+</table>
+<%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>
+<% if params[:numero_hoja].nil? %>
+    </div>
+<% end %>
+

@@ -1,0 +1,40 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Comercializable:</b>
+  <%= @renglon_ndc_articulo.comercializable %>
+</p>
+
+<p>
+  <b>Cantidad:</b>
+  <%= @renglon_ndc_articulo.cantidad %>
+</p>
+
+<p>
+  <b>Precio:</b>
+  <%= @renglon_ndc_articulo.precio %>
+</p>
+
+<p>
+  <b>Total renglon:</b>
+  <%= @renglon_ndc_articulo.total_renglon %>
+</p>
+
+<p>
+  <b>Total impuestos:</b>
+  <%= @renglon_ndc_articulo.total_impuestos %>
+</p>
+
+<p>
+  <b>Descuento:</b>
+  <%= @renglon_ndc_articulo.descuento %>
+</p>
+
+<p>
+  <b>Comentario:</b>
+  <%= @renglon_ndc_articulo.comentario %>
+</p>
+
+
+<%= link_to 'Edit', edit_renglon_ndc_articulo_path(@renglon_ndc_articulo) %> |
+<%= link_to 'Back', renglon_ndc_articulos_path %>

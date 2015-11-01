@@ -1,0 +1,362 @@
+
+<script>
+  var pre_descuento = <%if (@renglon_ndc_articulo != nil) %><%=  @renglon_ndc_articulo.descuento  %> <%else%>null<%end;%>;
+  var valor_impuesto = 0;
+
+  //tipo 0: precioReal = precio * descuento = precio * MAX{desc_lista, desc_art, desc_cli, desc_promo}
+  //tipo 1: precioReal = precio * descuento = precio * MAX{desc_lista, desc_art, desc_cli} * desc_promo
+  var config_tipo_calc_promo = 1;
+  var descuento_promo = 0; //se usa cuando config_tipo_calc_promo = 1
+
+  var texto_decuento_por = "";
+
+  var precio_unitario;
+  var descuento;
+  var renglon_ndc_articulo_comercializable_id = <%if (@renglon_ndc_articulo != nil) %><%=@renglon_ndc_articulo.comercializable_id %> <%else%>null<%end;%>;
+  $(function() {
+    <% @rand =  (0...8).map{65.+(rand(25)).chr}.join  %>
+
+    <%if (@renglon_ndc_articulo != nil) %>
+        cargarDatos<%= @rand %>(<%=@renglon_ndc_articulo.comercializable_id %>);
+    <%end%>
+
+    $("#comercializable_id<%= @rand %> ").focus();
+
+    $( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar_renglon<%= @rand %>").click();
+        }
+     });
+
+    $( "#descuento<%= @rand %>" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar_renglon<%= @rand %>").click();
+        }
+     });
+
+     $( "#renglon_ndc_articulo_comentario<%= @rand %>" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar_renglon<%= @rand %>").click();
+        }
+     });
+
+    $( "#guardar_renglon<%= @rand %>" ).button();
+    $( "#guardar_renglon<%= @rand %>" ).click(function() {
+    $( "#guardar_renglon<%= @rand %>" ).button( "disable" );
+    var data = new Object();
+    <% if(@renglon_ndc_articulo != nil) %>
+        data["_method"] =	"put";
+
+    <% end; %>
+      data['renglon_ndc_articulo[cantidad]'] =	$( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).val();
+      data['renglon_ndc_articulo[comercializable_id]'] =	renglon_ndc_articulo_comercializable_id;//$( "#renglon_ndc_articulo_comercializable_id<%= @rand %>" ).val();
+      data['renglon_ndc_articulo[precio_unitario]'] =	$( "#renglon_ndc_articulo_precio_unitario<%= @rand %>" ).val();
+      data['renglon_ndc_articulo[total_impuestos]'] =	$( "#renglon_ndc_articulo_total_impuestos<%= @rand %>" ).val();
+      data['renglon_ndc_articulo[total_renglon]'] =	$( "#renglon_ndc_articulo_total_renglon<%= @rand %>" ).val() - $( "#renglon_ndc_articulo_total_impuestos<%= @rand %>" ).val();
+      data['renglon_ndc_articulo[comentario]'] =	$( "#renglon_ndc_articulo_comentario<%= @rand %>" ).val();
+      data['renglon_ndc_articulo[descuento]'] =	$( "#descuento<%= @rand %>" ).val();
+
+      data['commit'] = "Create Notadecredito"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/notadecreditos/<%= @notadecredito.id %>/renglon_ndc_articulos<% if (@renglon_ndc_articulo==nil) %>.json/ <% else %>/<%= @renglon_ndc_articulo.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar_renglon<%= @rand %>" ).button( "disable" )
+          if (json_data.id){
+            $("#texto_error<%= @rand %>").html("");
+            <% if (@renglon_ndc_articulo!=nil) %>
+                closeIframe("/notadecreditos/<%= @notadecredito.id %>/renglon_ndc_articulos/<%= @renglon_ndc_articulo.id %>/edit",0);
+
+            <%end%>
+            reloadIframe("/notadecreditos/<%= @notadecredito.id %>/edit<%=@parametro%>")
+          }else{
+            $("#texto_error_inner<%= @rand %>").html("");
+            $( "#guardar_renglon<%= @rand %>" ).button( "enable" )
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+
+            }
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar_renglon<%= @rand %>" ).button( "enable" )
+          $("#texto_error_inner<%= @rand %>").html("");
+
+          var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>0:</strong> Error interno.</p></div><br/>';
+          $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+
+        }
+      });
+      return false;
+    });
+
+   // $( "#renglon_ndc_articulo_comercializable_id<%= @rand %>" ).change(function(){
+   function cargarDatos<%= @rand %>(com_id){
+      $.ajax({
+        type: "GET",
+        url: "/listaprecios/getPrecioArticuloCliente.json?cliente_id="+<%=@notadecredito.comerciante.id%>+"&comercializable_id="+ com_id +"&@notadecredito_id=<%= @notadecredito.id%>",
+        context: document.body,
+        success: function(data){
+          try
+          {
+            descuento_promo = 0;
+            if (pre_descuento != null){
+                descuento = pre_descuento;
+            }else{
+                if (config_tipo_calc_promo == 0){
+                    descuento = Math.max( data.precio[0].descuento, data.articulo.descuento, data.cliente.pdescuento,(data.promociones != undefined && data.promociones.length > 0)?data.promociones[0].descuento:0,
+                    (data.desc_cli_articulo != undefined && data.desc_cli_articulo.length > 0)?data.desc_cli_articulo[0].descuento:0 );
+                }else{
+                    descuento = Math.max( data.precio[0].descuento, data.articulo.descuento, data.cliente.pdescuento, (data.desc_cli_articulo != undefined && data.desc_cli_articulo.length > 0)?data.desc_cli_articulo[0].descuento:0);
+                    descuento_promo = (data.promociones != undefined && data.promociones.length > 0)?data.promociones[0].descuento:0;
+                }
+                if(descuento > 0){
+                    var coma = false;
+                    texto_decuento_por = "";
+                    if(data.cliente.pdescuento == descuento ){
+                        texto_decuento_por +=  "Cliente";
+                        coma = true;
+                    }
+                    if(data.articulo.descuento == descuento){
+                        if (coma!=false){
+                            texto_decuento_por += ", ";
+                        }
+                        coma = true;
+                        texto_decuento_por += "Artículo"
+                    }
+                    if(data.precio[0].descuento == descuento){
+                        if (coma!=false){
+                            texto_decuento_por += ", ";
+                        }
+                        coma = true;
+                        texto_decuento_por += "Lista"
+                    }
+                    if((data.desc_cli_articulo != undefined && data.desc_cli_articulo.length > 0) && data.desc_cli_articulo[0].descuento == descuento){
+                        if (coma!=false){
+                            texto_decuento_por += ", ";
+                        }
+                        coma = true;
+                        texto_decuento_por += "Producto"
+                    }
+                    if (config_tipo_calc_promo == 0){
+                         if (descuento_promo == descuento){
+                             if (coma!=false){
+                                texto_decuento_por += ", ";
+                             }
+                             coma = true;
+                             texto_decuento_por += "Promoción"
+                         }
+                    }
+                }
+            }
+            if (pre_descuento == null){
+                if (descuento > 0){
+                    if (descuento_promo > 0){
+                        $("#descuento_mensaje<%= @rand %>").html("Aplica " + descuento + "% por "+ texto_decuento_por + " más " + descuento_promo + "% por Promoción");
+                    }else{
+                        $("#descuento_mensaje<%= @rand %>").html("Aplica " + descuento + "% por "+ texto_decuento_por);
+                    }
+                }else{
+                     if (descuento_promo > 0){
+                        $("#descuento_mensaje<%= @rand %>").html("Aplica "  + descuento_promo + "% por Promoción");
+                    }
+                }
+            }
+            pre_descuento = null;
+            if(config_tipo_calc_promo == 1){
+                $("#descuento<%= @rand %>").val(reondeo((descuento+descuento_promo) - ((descuento*descuento_promo)/100)));
+            }else{
+                $("#descuento<%= @rand %>").val(descuento);
+            }
+            precio_unitario = data.precio[0].precio;
+            $( "#renglon_ndc_articulo_precio_unitario<%= @rand %>" ).val(reondeo(precio_unitario*(1/tipocambio)));
+            var impuesto = 0;
+            $("#impuesto_aplicado<%= @rand %>").html(" : ");
+            valor_impuesto = 0;
+            for(var i in data.articulo.impuestos){
+              //valor_impuesto = valor_impuesto + precio_unitario * ( data.articulo.impuestos[i].porcentajea/100);
+              if(i!=0){
+                $("#impuesto_aplicado<%= @rand %>").append(", ");
+              }
+              valor_impuesto = valor_impuesto + data.articulo.impuestos[i].porcentajea;
+              impuesto = ( data.articulo.impuestos[i].porcentajea);
+              $("#impuesto_aplicado<%= @rand %>").append(data.articulo.impuestos[i].nombre + " "+impuesto + "%");
+            }
+            if(valor_impuesto == 0){
+              $("#impuesto_aplicado<%= @rand %>").append("No tiene impuestos");
+            }
+            $( "#renglon_ndc_articulo_subtotal_renglon<%= @rand %>" ).val(reondeo( $( "#renglon_ndc_articulo_precio_unitario<%= @rand %>" ).val() * $( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).val()));
+            $( "#renglon_ndc_articulo_total_impuestos<%= @rand %>" ).val(reondeo( ($( "#renglon_ndc_articulo_precio_unitario<%= @rand %>" ).val()*(1-descuento/100)*(1-descuento_promo/100)) * ($( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).val()) * (valor_impuesto/100) ));
+            $( "#renglon_ndc_articulo_total_renglon<%= @rand %>" ).val(reondeo( ($( "#renglon_ndc_articulo_precio_unitario<%= @rand %>" ).val()*(1-descuento/100)*(1-descuento_promo/100)) * ($( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).val()) + ($( "#renglon_ndc_articulo_total_impuestos<%= @rand %>" ).val())*1 ));
+          }catch(err)
+          {
+
+            //Handle errors here
+          }
+        }
+      });
+
+    }//);
+
+    $( "#descuento<%= @rand %>").keyup(function(e){
+          if ($( "#descuento<%= @rand %>").val() > 100){
+              $( "#descuento<%= @rand %>").val(100)
+          }
+          if((e.keyCode >= 48 && e.keyCode <= 57)||(e.keyCode >= 96 && e.keyCode <= 105)){
+            $("#descuento_mensaje<%= @rand %>").html("Se ingresa un descuento puntual");
+          }
+
+          $( "#renglon_ndc_articulo_total_impuestos<%= @rand %>" ).val(reondeo( ($( "#renglon_ndc_articulo_precio_unitario<%= @rand %>" ).val()*(1 - ($( "#descuento<%= @rand %>").val()/100))) * ($( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).val()) * (valor_impuesto/100) ));
+          $( "#renglon_ndc_articulo_total_renglon<%= @rand %>" ).val(reondeo( ($( "#renglon_ndc_articulo_precio_unitario<%= @rand %>" ).val()*(1 - ($( "#descuento<%= @rand %>").val()/100))) * ($( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).val()) + ($( "#renglon_ndc_articulo_total_impuestos<%= @rand %>" ).val())*1 ));
+    });
+
+    $( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).keyup(function(){
+      $( "#renglon_ndc_articulo_subtotal_renglon<%= @rand %>" ).val(reondeo( $( "#renglon_ndc_articulo_precio_unitario<%= @rand %>" ).val() * $( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).val()));
+      $( "#renglon_ndc_articulo_total_impuestos<%= @rand %>" ).val(reondeo( ($( "#renglon_ndc_articulo_precio_unitario<%= @rand %>" ).val()*(1 - ($( "#descuento<%= @rand %>").val()/100))) * ($( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).val()) * (valor_impuesto/100) ));
+      $( "#renglon_ndc_articulo_total_renglon<%= @rand %>" ).val(reondeo( ($( "#renglon_ndc_articulo_precio_unitario<%= @rand %>" ).val()*(1 - ($( "#descuento<%= @rand %>").val()/100))) * ($( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).val()) + ($( "#renglon_ndc_articulo_total_impuestos<%= @rand %>" ).val())*1 ));
+
+    });
+
+
+    $( "#comercializable_id<%= @rand %>" ).autocomplete({
+      source: function( request, response ) {
+         var search = request.term;
+        if(request.term == "no search")
+          search = "";
+        var url = "/articuloinds.json?comercializable="+search+"&lista_precio_id=<%= @notadecredito.comerciante.listaprecio.id %>";
+        $.ajax({
+          url: url,
+          success: function( data ) {
+
+            if(data.length == 0){
+              data = [{
+                  id :-1,
+                  texto: "no se encontraron resultados"
+                }];
+            }
+            response( $.map( data, function( item ) {
+              if (item.id == -1){
+                return {
+                  label: "no se encotraron resultados" ,
+                  value: request.term,
+                  id :item.id
+                }
+              }else{
+                return {
+                  label: "<" + item.id + ">" + item.nombre,
+                  value:  item.nombre ,
+                  id :item.id,
+                  complete_data : item
+                }
+              }
+            })
+          );
+          },
+          error: function( xhr, status, index, anchor ) {
+            return {
+              label: 'no se econtro reultado' ,
+              value: request.term,
+              id :-1
+            }
+          }
+        });
+      },
+      minLength: 1,
+      select: function( event, ui ) {
+
+        if(ui.item.id != -1){
+          renglon_ndc_articulo_comercializable_id = ui.item.complete_data.id;
+          cargarDatos<%= @rand %>(ui.item.complete_data.id);
+          $("#nombre_producto<%= @rand %>").html(ui.item.label  );
+          setTimeout(
+                  function(){
+                      $( "#comercializable_id<%= @rand %>" ).val("");
+                      $( "#renglon_ndc_articulo_cantidad<%= @rand %>" ).focus();
+                  },100);
+        }
+        // showIframe("/articuloinds/"+ui.item.id+"/edit","Editar Articulo",500,500);
+      },
+      open: function() {
+        $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+      },
+      close: function() {
+        $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+      }
+    });
+
+
+  });
+</script>
+<% if  (@renglon_ndc_articulo==nil) %>
+  <% @renglon_ndc_articulo = RenglonNdcArticulo.new %>
+<% end %>
+
+<%= form_for([@notadecredito,@renglon_ndc_articulo]) do |f| %>
+  <% if @renglon_ndc_articulo.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@renglon_ndc_articulo.errors.count, "error") %> prohibited this renglon_ndc_articulo from being saved:</h2>
+
+      <ul>
+      <% @renglon_ndc_articulo.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <label for="renglon_ndc_articulo_Articulos">Art&iacute;culos</label>
+  </div>
+    <% if @notadecredito.comerciante.listaprecio!=nil %><!--(:include => :rola)-->
+      <div class ="combobox">
+
+        <!--<%= f.collection_select(:comercializable_id, Comercializable.get_comercializable_cliente(@notadecredito.comerciante.listaprecio.id) , :id,:nombreart , {:prompt => 'Agregar un Artículo'}, :class =>  'text ui-widget-content ui-corner-all',:tabindex=>1,:id => "renglon_ndc_articulo_comercializable_id" + @rand.to_s ) %>-->
+        <%= f.text_field :comercializable_id , :size =>20, :class =>  'filtro' ,:id => "comercializable_id" + @rand.to_s  ,:style=>"width: 18em !important;" ,:tabindex=>1%>
+        <span id="nombre_producto<%= @rand %>" style="color: red;"><%if (@renglon_ndc_articulo.comercializable != nil) %><%=  @renglon_ndc_articulo.comercializable.nombreart  %> <%end;%></span>
+      </div>
+        <%= f.label :cantidad %>
+        <div class ="combobox">  <%= f.text_field :cantidad , :size =>20,:tabindex=>2, :class =>  'text ui-widget-content ui-corner-all' ,:id => "renglon_ndc_articulo_cantidad" + @rand.to_s %></div>
+
+        <span id="descuento_aplicado<%= @rand %>" style="color: red;">Descuento</span>
+        <div class ="combobox">  <%= f.text_field :descuento,:tabindex=>3, :size =>20, :class =>  'text ui-widget-content ui-corner-all' ,:id => "descuento" + @rand.to_s %>
+        <span id="descuento_mensaje<%= @rand %>" style="color: red;"></span>
+        </div>
+    <%else%>
+      <span id="descuento_aplicado<%= @rand %>" style="color: red;">El cliente no tiene productos asociados. Ir a lista de precios </span>
+    <%end%>
+ <div class="field">
+    <%= f.label :comentario %>
+    <div class ="combobox"> <%= f.text_field :comentario,:tabindex=>4, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => "renglon_ndc_articulo_comentario" + @rand.to_s %></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :precio_unitario %>
+    <div class ="combobox"> <%= f.text_field :precio_unitario , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_ndc_articulo_precio_unitario" + @rand.to_s,:readonly=>"readonly" %></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :total_impuestos %>
+    <div class ="combobox">  <%= f.text_field :total_impuestos , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_ndc_articulo_total_impuestos" + @rand.to_s ,:readonly=>"readonly"%><span id="impuesto_aplicado<%= @rand %>" style="color: red;"> </span></div>
+  </div>
+
+  <div class="field">
+    <label for="renglon_ndc_articulo_total_renglon">Subtotal</label>
+    <div class ="combobox">  <%= f.text_field :total_renglon , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_ndc_articulo_subtotal_renglon" + @rand.to_s ,:readonly=>"readonly"%></div>
+  </div>
+
+  <div class="field" style="position: absolute; <%if (@renglon_ndc_articulo.id != nil) %>top: 224px;<%else%>top: 268px;<%end;%> left: 377px;">
+    <label for="renglon_ndc_articulo_total_renglon">Total rengl&oacute;n</label>
+    <div class ="combobox">  <%= f.text_field :total_renglon , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_ndc_articulo_total_renglon" + @rand.to_s ,:readonly=>"readonly"%></div>
+  </div>
+
+ <div class="actions" >
+    <a id="guardar_renglon<%= @rand %>" tabindex=5><%if (@renglon_ndc_articulo.id != nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+
+<% end %>
+
+

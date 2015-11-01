@@ -1,0 +1,50 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Notadedebito:</b>
+  <%= @renglon_notadebito.notadedebito %>
+</p>
+
+<p>
+  <b>Factura:</b>
+  <%= @renglon_notadebito.factura %>
+</p>
+
+<p>
+  <b>Comentario:</b>
+  <%= @renglon_notadebito.comentario %>
+</p>
+
+<p>
+  <b>Cantidad:</b>
+  <%= @renglon_notadebito.cantidad %>
+</p>
+
+<p>
+  <b>Comercializable:</b>
+  <%= @renglon_notadebito.comercializable %>
+</p>
+
+<p>
+  <b>Descuento:</b>
+  <%= @renglon_notadebito.descuento %>
+</p>
+
+<p>
+  <b>Precio unitario:</b>
+  <%= @renglon_notadebito.precio_unitario %>
+</p>
+
+<p>
+  <b>Total impuestos:</b>
+  <%= @renglon_notadebito.total_impuestos %>
+</p>
+
+<p>
+  <b>Total renglon:</b>
+  <%= @renglon_notadebito.total_renglon %>
+</p>
+
+
+<%= link_to 'Edit', edit_renglon_notadebito_path(@renglon_notadebito) %> |
+<%= link_to 'Back', renglon_notadebitos_path %>

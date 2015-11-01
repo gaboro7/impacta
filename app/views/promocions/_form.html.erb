@@ -1,0 +1,388 @@
+<%  @rand = (0...8).map{65.+(rand(25)).chr}.join %>
+<script>
+    var productos = new Array();
+    var clientes = new Array();
+    $(function() {
+        var day = $( "#fechainicio" ).val();
+        var day2 = $( "#fechafin" ).val();
+        //   $( "#fechainicio" ).datepicker( $.datepicker.regional[ "es" ] );
+        //   $( "#fechainicio" ).datepicker( "option", "dateFormat","yy-mm-dd" );
+        $( "#fechainicio" ).val(day);
+        ///   $( "#fechainicio" ).datepicker($.datepicker.regional[ "es" ] );
+
+        // $( "#fechafin" ).datepicker();
+        //$( "#fechafin" ).datepicker( "option", "dateFormat","yy-mm-dd" );
+        $( "#fechafin" ).val(day2);
+        var dates = $( "#fechainicio, #fechafin" ).datepicker({
+            changeMonth: true,
+            changeYear: true,
+            onSelect: function( selectedDate ) {
+                var option = this.id == "fechainicio" ? "minDate" : "maxDate",
+                        instance = $( this ).data( "datepicker" ),
+                        date = $.datepicker.parseDate(
+                                instance.settings.dateFormat ||
+                                        $.datepicker._defaults.dateFormat,
+                                selectedDate, instance.settings );
+                //dates.not( this ).datepicker( "option", option, date );
+            }
+        });
+
+        $('#agregar_productos<%= @rand %>').tagsInput({
+            // my parameters here
+            defaultText : " "
+        });
+        $('#agregar_cliente<%= @rand %>').tagsInput({
+            // my parameters here
+            defaultText : " "
+        });
+
+        //Spanish (Espa&ntilde;ol)
+        $( "#guardar" ).button();
+        $( "#guardar" ).click(function() {
+            $(this).button( "disable" )
+            var data = new Object();
+            <% if(@promocion.id!=nil) %>
+            data["_method"] =	"put";
+            <% end; %>
+            data['promocion[descripcion]'] =	$( "#promocion_descripcion" ).val();
+            data['promocion[fechainicio]'] =	$( "#fechainicio" ).val();
+            data['promocion[fechafin]'] =	$( "#fechafin" ).val();
+            data['promocion[descuento]'] =	$( "#promocion_descuento" ).val();
+
+            data['promocion[descripcion]'] =	$( "#descripcion" ).val();
+
+            var comercializable_ids = new Array();
+            var arr = $('#agregar_productos<%= @rand %>').val().split(",");
+            for (var i in arr){
+                comercializable_ids.push(productos[arr[i]]);
+            }
+            var formadepago_ids = new Array();
+            $(".formadepago:checked").each(function(){
+                formadepago_ids.push(parseInt($(this).attr("data")));
+            });
+
+            var cliente_ids = new Array();
+            arr = $('#agregar_cliente<%= @rand %>').val().split(",");
+            for (var i in arr){
+                cliente_ids.push(clientes[arr[i]]);
+            }
+
+
+            data['promocion[comercializable_ids][]'] = comercializable_ids;
+            data['promocion[formadepago_ids][]'] = formadepago_ids;
+
+            data['promocion[cliente_ids][]'] = cliente_ids;
+
+
+            data["utf8"] =	true;
+            $.ajax({
+                type: "POST",
+                url: "/promocions<% if (@promocion.id==nil) %>.json/ <% else %>/<%= @promocion.id %>.json <%end%>",
+                data: data,
+                context: document.body,
+                success: function(json_data){
+                    $( "#guardar" ).button( "enable" )
+                    if (json_data.id){
+                        $("#texto_error").html("");
+                        tab_selected.click();
+                    <% if (@promocion.id==nil) %>
+                        closeIframe("/promocions/<% if (@promocion.id==nil) %>new<% else %><%= @promocion.id %>/edit<%end%>");
+                        showIframe("/promocions/"+json_data.id+"/edit","Editar Promocion");
+
+                    <%else%>
+                        reloadIframe("/promocions/<% if (@promocion.id==nil) %>new<% else %><%= @promocion.id %>/edit<%end%>");
+                    <%end %>
+                    }else{
+                        $("#texto_error").html("");
+                        for (var i in json_data){
+                            var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+                            $("#texto_error").html($("#texto_error").html()+error);
+
+                        }
+                    }
+
+                },
+                error: function( xhr, status, index, anchor ) {
+                    $( "#guardar" ).button( "enable" )
+                    $("#texto_error").html("");
+
+                    var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>0:</strong> error interno.</p></div><br/>';
+                    $("#texto_error").html($("#texto_error").html()+error);
+
+
+                }
+            });
+            return false;
+        });
+        $( "#promociones-pago" ).tabs();
+        $( "#comercializable_id" ).autocomplete({
+            source: function( request, response ) {
+                var search = request.term;
+                if(request.term == "no search")
+                    search = "";
+                var url = "/articuloinds.json?comercializable="+search;
+                $.ajax({
+                    url: url,
+                    success: function( data ) {
+
+                        if(data.length == 0){
+                            data = [{
+                                id :-1,
+                                texto: "no se encontraron resultados"
+                            }];
+                        }
+                        response( $.map( data, function( item ) {
+                            if (item.id == -1){
+                                return {
+                                    label: "no se encotraron resultados" ,
+                                    value: request.term,
+                                    id :item.id
+                                }
+                            }else{
+                                return {
+                                    label: item.nombre + " (" + item.id + ")" ,
+                                    value:  item.nombre ,
+                                    id :item.id,
+                                    complete_data : item
+                                }
+                            }
+                        })
+                        );
+                    },
+                    error: function( xhr, status, index, anchor ) {
+                        return {
+                            label: 'no se econtro reultado' ,
+                            value: request.term,
+                            id :-1
+                        }
+                    }
+                });
+            },
+            minLength: 1,
+            select: function( event, ui ) {
+
+                if(ui.item.id != -1){
+
+
+                    var arr = $('#agregar_productos<%= @rand %>').val().split(",");
+                    if (jQuery.inArray(ui.item.value, arr) < 0)
+                        $('#agregar_productos<%= @rand %>').addTag(ui.item.value + " ("+ui.item.id +")");
+                }
+                var t=setTimeout(function(){$( "#comercializable_id" ).val("");},1000)
+
+                // showIframe("/articuloinds/"+ui.item.id+"/edit","Editar Articulo",500,500);
+            },
+            open: function() {
+                $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+            },
+            close: function() {
+                $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+            }
+        });
+        $( "#cliente_id" ).autocomplete({
+            source: function( request, response ) {
+
+                $.ajax({
+                    url: "empresas.json?filtro="+request.term,
+                    success: function( data ) {
+
+                        if(data.empresas.length == 0 && data.sucursales.length == 0 &&  data.personas.length == 0){
+                            data = [{
+                                id :-1
+                            }];
+                        }else{
+                            var aux = new Array();
+                            data = aux.concat(data.empresas,data.personas);
+
+                        }
+                        response( $.map( data, function( item ) {
+
+                            if (item.id == -1){
+                                return {
+                                    label: "no se encotraron resultados" ,
+                                    value: request.term,
+                                    id :item.id
+                                }
+                            }else{
+                                if (item.empresa){
+                                    return {
+                                        label: item.nombre + " ["+ item.empresa.nombre+"]" ,
+                                        value: item.nombre+ " ["+ item.empresa.nombre+"]",
+                                        id: item.empresa.id,
+                                        sucursal_id : item.id,
+                                        domicilio : item.domicilio,
+                                        nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                                        rut : item.empresa.nif
+
+                                    }
+                                }
+                                else
+                                    return {
+                                        label: item.nombre ,
+                                        value: item.nombre,
+                                        id :item.id,
+                                        sucursal_id : -1,
+                                        domicilio : item.domicilio,
+                                        nombre :item.nombre,
+                                        rut : item.nif
+
+                                    }
+                            }
+                        })
+                        );
+                    },
+                    error: function( xhr, status, index, anchor ) {
+                        return {
+                            label: 'no se econtro reultado' ,
+                            value: request.term,
+                            id :-1
+                        }
+                    }
+                });
+            },
+            minLength: 1,
+            select: function( event, ui ) {
+                if(ui.item.id != -1){
+                    var arr = $('#agregar_cliente<%= @rand %>').val().split(",");
+                    if (jQuery.inArray(ui.item.value, arr) < 0)
+                        $('#agregar_cliente<%= @rand %>').addTag(ui.item.value);
+                }
+            },
+            open: function() {
+                $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+            },
+            close: function() {
+                $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+            }
+        });
+
+
+
+
+        <% query = "SELECT articulos.id as id, articulos.nombre as nombre FROM articulos WHERE articulos.id in(SELECT rolarticulos.id FROM rolarticulos  WHERE rolarticulos.type IN ('Comercializable') ) ORDER BY articulos.nombre";
+     data = ActiveRecord::Base.connection.execute(query); %>
+        <!-- <%= data %> -->
+        <% if  @promocion.id != nil
+              query = "SELECT `rolarticulos`.id
+      FROM `rolarticulos`
+      INNER JOIN `comercializables_promocions`
+      ON `rolarticulos`.`id` = `comercializables_promocions`.`comercializable_id`
+      WHERE
+       `rolarticulos`.`type` IN ('Comercializable') AND
+       `comercializables_promocions`.`promocion_id` ="+@promocion.id.to_s
+        @agregados = ActiveRecord::Base.connection.execute(query);
+            end
+        %>
+        <% data.each do  |com|%>
+        <% if @promocion.id != nil
+                if @agregados.to_a.include?([com[0]]) %>
+        $('#agregar_productos<%= @rand %>').addTag('<%= com[1] %> (<%= com[0] %>)');
+        <%     end %>
+
+        <%   end %>
+        productos['<%= com[1] %> (<%= com[0] %>)'] = <%= com[0] %>;
+        <%end%>
+
+
+
+        <% for fp in Cliente.all %>
+        <% if @promocion.id != nil
+            if @promocion.cliente.include?(fp) %>
+        $('#agregar_cliente<%= @rand %>').addTag('<%= fp.nombre %>');
+        <%  end
+          end %>
+        clientes['<%= fp.nombre %>'] = '<%= fp.id %>';
+        <% end %>
+
+
+    });
+
+
+
+
+
+
+</script>
+
+<%= form_for(@promocion) do |f| %>
+    <% if @promocion.errors.any? %>
+        <div id="error_explanation">
+          <h2><%= pluralize(@promocion.errors.count, "error") %> prohibited this promocion from being saved:</h2>
+
+          <ul>
+            <% @promocion.errors.full_messages.each do |msg| %>
+                <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+    <% end %>
+
+    <div id="texto_error"> </div>
+    <div class="field">
+      <%= f.label :descripcion %><br />
+      <div class ="combobox"> <%= f.text_field :descripcion , :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => "descripcion"%></div>
+    </div>
+    <div class="field">
+      <%= f.label :inicio %><br />
+      <div class ="combobox"> <%= f.text_field :fechainicio , :size =>20, :class =>  'text ui-widget-content ui-corner-all' ,:id => "fechainicio"%></div>
+    </div>
+    <div class="field">
+      <%= f.label :cierre %><br />
+      <div class ="combobox"> <%= f.text_field :fechafin , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "fechafin" %></div>
+    </div>
+    <div class="field">
+      <%= f.label :descuento %><br />
+      <div class ="combobox"> <%= f.text_field :descuento , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+    </div>
+    <div id="promociones-pago">
+      <ul>
+        <li><a href="#tabs-articulos">Articulos</a></li>
+        <li><a href="#tabs-clientes">Clientes</a></li>
+        <li><a href="#tabs-pago">Formas de pago</a></li>
+
+      </ul>
+      <div class="field" id="tabs-articulos" style="width: auto;height: 240px; overflow: auto">
+        <div class="field">
+          <%= f.label :Articulos %>
+          <div class ="combobox"><input id="comercializable_id" size="20" type="text" class="filtro" style="width: 18em !important;"/>
+            <span id="nombre_producto<%= @rand %>" style="color: red;"></span>
+          </div>
+        </div>
+
+        <div style="height: 200px; ">
+          <div id="agregar_productos<%= @rand %>">
+          </div>
+        </div>
+      </div>
+      <div class="field" id="tabs-pago" style="width: auto;height: 240px; overflow: auto">
+        <% for fp in Formadepago.all %>
+            <% if @promocion.id == nil %>
+                <%= check_box_tag "promocion[formadepago_ids][]", fp.id, false, :class => "formadepago", :data => fp.id   %>
+            <% else %>
+                <%= check_box_tag "promocion[formadepago_ids][]", fp.id, @promocion.formadepago.include?(fp), :class => "formadepago", :data => fp.id %>
+            <% end %>
+            <%= label_tag "promocion[formadepago_ids][]", fp.nombre, :for => "promocion[formadepago_ids][]" %><br />
+
+        <% end %>
+      </div>
+
+      <div class="field" id="tabs-clientes" style="width: auto;height: 240px; overflow: auto">
+        <div class="field">
+          <%= f.label :Cliente %>
+          <div class ="combobox"><input id="cliente_id" size="20" type="text" class="filtro" style="width: 18em !important;"/>
+          </div>
+        </div>
+        <div style="height: 200px; ">
+          <div id="agregar_cliente<%= @rand %>"  >
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+    <br/>
+    <div class="actions" >
+      <a id="guardar"><%if (@promocion.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end%> </a>
+    </div>
+
+<% end %>

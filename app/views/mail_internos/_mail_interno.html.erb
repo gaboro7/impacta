@@ -1,0 +1,11 @@
+<tr><th class="ui-state-default ui-corner-all" width="350px">
+    <%= mail_interno.mail %></th>
+     <%
+      @goto = redirigirMail @conmail
+     %>
+    <th  class="ui-state-default ui-corner-all"><a href ="#" data="<%=@goto%>/mail_internos/<%=  mail_interno.id %>/edit" dataw="400"  datah="200" class="edit_sub_link<%=  @internal %>" title="Editar e-mails"><span class="ui-icon ui-icon-wrench"></span></a></th>
+    <th  class="ui-state-default ui-corner-all"><a href="#" action="<%=@goto%>/mail_internos/<%=  mail_interno.id %>" class="delete_sub_list<%=  @internal %>" data-method="delete" title="Eliminar e-mails"><span class="ui-icon ui-icon-trash"></span></a></th>
+
+
+
+</tr>

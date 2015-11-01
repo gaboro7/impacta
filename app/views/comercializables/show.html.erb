@@ -1,0 +1,15 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Descuento:</b>
+  <%= @comercializable.descuento %>
+</p>
+
+<p>
+  <b>Garantia:</b>
+  <%= @comercializable.garantia %>
+</p>
+
+
+<%= link_to 'Edit', edit_comercializable_path(@comercializable) %> |
+<%= link_to 'Back', comercializables_path %>

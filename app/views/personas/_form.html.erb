@@ -1,0 +1,172 @@
+<script type="text/javascript">
+  $(function(){
+      // if @persona.id != nil and !@persona.credito or @persona.id == nil%>
+        $("#precargo").hide();
+        $("#urecargo").hide();
+        $("#cantrecargo").hide();
+      // end %>
+
+
+      $("#persona_credito").change(function(){
+
+        if ($("#persona_credito:checked").length > 0) {
+
+          // no va ma esto, se debería en la proxima iteración asignar una forma de pago por defecto
+          // para cada cliente que sirva para precargar la forma de pago pero q s pueda modificar
+          //$("#precargo").show("Highlight");
+          //$("#urecargo").show( "Highlight");
+          //$("#cantrecargo").show( "Highlight");
+
+       }
+        else {
+            $("#precargo").hide("Highlight");
+            $("#urecargo").hide( "Highlight");
+            $("#cantrecargo").hide( "Highlight");
+
+        }
+      })
+
+
+    // Datepicker
+    $("#persona_trecargo").addClass("text ui-widget-content ui-corner-all");
+
+
+    $( "#guardar" ).button();
+    $( "#guardar" ).click(function() {
+      $(this).button( "disable" )
+      var data = new Object();
+      <% if(@persona.id!=nil) %>
+        data["_method"] =	"put";
+      <% end; %>
+      data['persona[nombre]'] =	$( "#persona_nombre" ).val();
+      data['persona[credito]'] =	$( "#persona_credito" ).val();
+      data['persona[domicilio]'] =	$( "#persona_domicilio" ).val();
+      data['persona[habilitado]'] =	$( "#persona_habilitado" ).val();
+      data['persona[nic]'] =	$( "#persona_nic" ).val();
+      data['persona[pdescuento]'] =	$( "#persona_pdescuento" ).val();
+      data['persona[tipocliente_id]'] =	$( "#persona_tipocliente_id" ).val();
+
+      if ($("#persona_credito:checked").length > 0) {
+          data['persona[precargo]'] = $( "#persona_precargo" ).val();
+          data['persona[urecargo]'] = $( "#persona_urecargo" ).val();
+          data['persona[cantrecargo]'] = $( "#persona_cantrecargo" ).val();
+          data['persona[credito]'] =	true;
+      } else {
+          data['persona[precargo]'] = null;
+          data['persona[urecargo]'] = [];
+          data['persona[cantrecargo]'] = null;
+          data['persona[credito]'] =	false;
+      }
+
+      data['commit'] =	"Create Persona";
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/personas<% if(@persona.id==nil) %>.json/<% else %>/<%= @persona.id %>.json/<% end %>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar" ).button( "enable" )
+          if (json_data.id){
+            $("#texto_error").html("");
+            tab_selected.click();
+            <%  if(@persona.id==nil) %>
+                closeIframe("/personas/new");
+              showIframe("/personas/"+json_data.id+"/edit","Editar Persona",900,600)
+            <%else%>
+              reloadIframe("/personas/"+json_data.id+"/edit");
+            <%  end %>
+          }else{
+            $("#texto_error").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error").html($("#texto_error").html()+error);
+
+            }
+          }
+
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar" ).button( "enable" )
+          $("#texto_error").html("");
+          var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>Error:</strong> Error interno.</p></div><br/>';
+          $("#texto_error").html($("#texto_error").html()+error);
+        }
+      });
+      return false;
+    });
+  });
+</script>
+<%= form_for(@persona) do |f| %>
+  <% if @persona.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@persona.errors.count, "error") %> No se pudo agregar la Persona</h2>
+
+      <ul>
+        <% @persona.errors.messages.each do |msg| %>
+          <li><%= msg[1][0] %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div id="texto_error"> </div>
+
+  <div class="field" >
+      <%= f.label :numero %><br />
+      <div class ="combobox"> <%= f.label !@persona.id.nil? ? @persona.id.to_s : " " %>  </div>
+  </div>
+
+  <div class="field">
+    <%= f.label :nombre %>
+    <div class ="combobox"> <%= f.text_field :nombre , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+  </div>
+  <div class="field">
+    <%= f.label :cedula %>
+    <div class ="combobox"> <%= f.number_field :nic , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+  </div>
+  <div class="field">
+    <%= f.label :domicilio %>
+    <div class ="combobox">  <%= f.text_field :domicilio , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+    </div>
+
+    <div class="field" >
+      <%= f.label :grupo %><br />
+      <div class ="combobox"> <%= f.collection_select(:tipocliente_id,Tipocliente.all, :id, :nombre, {:prompt => 'Agregue un grupo de cliente'}, :size =>1, :class =>  'text ui-widget-content ui-corner-all') %>  </div>
+      <div id="agregar_new_tipo"></div>
+    </div>
+    <div class="field" >
+        <%= f.label :descuento %><br />
+        <div class ="combobox"> <%= f.number_field :pdescuento, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %>  </div>
+      </div>
+
+
+  <div class="field" id= "credito" >
+    <%= f.label :credito %><br />
+    <% if @persona.id == nil %>
+            <%= f.check_box :credito,{ :size =>20, :class =>  'text ui-widget-content ui-corner-all'}, false %>
+    <% else %>
+            <%= f.check_box :credito, {:size =>20, :class =>  'text ui-widget-content ui-corner-all'}, @persona.credito %>
+    <% end %>
+
+  </div>
+  <div class="field" id="precargo">
+    <%= f.label :porcentaje %><br />
+    <div class ="combobox">  <%= f.text_field :precargo, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %>  </div>
+  </div>
+
+  <div class="field" id="cantrecargo">
+    <%= f.label :cantidad %>
+    <div class ="combobox">  <%= f.text_field :cantrecargo , :size =>20, :class =>  'text ui-widget-content ui-corner-all' ,:id => "persona_cantrecargo" %></div>
+  </div>
+
+  <div class="field" id="urecargo">
+        <%= f.label :unidad %>
+        <div class ="combobox"  >  <%= f.enum_select :urecargo, :size =>10, :class =>  'text ui-widget-content ui-corner-all' %>  </div>
+
+  </div>
+
+
+  <div class="actions">
+   <a id="guardar"><%if (@persona.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+<% end %>

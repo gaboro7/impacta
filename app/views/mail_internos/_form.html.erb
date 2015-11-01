@@ -1,0 +1,76 @@
+<% rand = (0...8).map{65.+(rand(25)).chr}.join %>
+<%
+@goto = redirigirMail @conmail
+%>
+<script>
+
+  $( "form" ).submit(function(event) {
+    event.preventDefault();
+    var self = this;
+
+  });
+  $('input').attr('autocomplete','off');
+</script>
+<script type="text/javascript">
+  $(function(){
+    $( "#guardarMail<%=rand%>" ).button();
+    $( "#guardarMail<%=rand%>" ).click(function() {
+      $(this).button( "disable" )
+      var data = new Object();
+      data['mail[mail]'] =	$( "#mail_mail<%=rand%>" ).val();
+      data['commit'] =	"Create Mail";
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "<%=@goto%>/mail_internos.json",
+        data: data,
+        context: document.body,
+        success:function(json_data){
+          $( "#guardarMail<%=rand%>" ).button( "enable" )
+          if (json_data.id){
+            reloadIframe("<%=@goto%>/edit",1);
+          }else{
+            $("#texto_error_mail<%=rand%>").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error_mail<%=rand%>").html($("#texto_error_mail<%=rand%>").html()+error);
+
+            }
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardarMail<%=rand%>" ).button( "enable" )
+          $("#texto_error_mail<%=rand%>").html("");
+          for (var i in xhr){
+            var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+xhr[i]+'.</p></div><br/>';
+            $("#texto_error_mail<%=rand%>").html($("#texto_error_mail<%=rand%>").html()+error);
+
+          }
+        }
+      });
+      return false;
+    });
+  });
+</script>
+<%= form_for([@conmail, MailInterno.new]) do |f| %>
+  <% if @conmail.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@conmail.errors.count, "error") %> No se pudo agregar el e-mail :</h2>
+
+      <ul>
+        <% @conmail.errors.messages.each do |msg| %>
+          <li><%= msg[1][0] %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div id="texto_error_mail<%=rand%>"> </div>
+  <div class="field">
+    <%= f.label :mail %>
+    <div class ="combobox">  <%= f.text_field :mail, :size =>20, :class =>  'text ui-widget-content ui-corner-all' , :id => "mail_mail"+rand.to_s %></div>
+  </div>
+  <div class="actions">
+    <a id="guardarMail<%=rand%>">Guardar Nuevo e-mail</a>
+  </div>
+<% end %>
+

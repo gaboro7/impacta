@@ -1,0 +1,125 @@
+<script>
+  $(function() {
+    $("#pagoacredito_unidad").attr("class", 'text ui-widget-content ui-corner-all');
+    $("#pagoacredito_estado").attr("class", 'text ui-widget-content ui-corner-all');
+    $("#pagoacredito_unidad").css("width", '90px');
+<% if(@pagoacredito.id==nil) %>
+      $( "#pagoacredito_estado" ).val("habilitado");
+<% end %>
+    //Spanish (Espa&ntilde;ol)
+    $( "#guardar" ).button();
+    $( "#guardar" ).click(function() {
+      $(this).button( "disable" )
+      var data = new Object();
+<% if(@pagoacredito.id!=nil) %>
+
+        data["_method"] =	"put";
+
+<% end %>
+
+
+      data['pagoacredito[nombre]'] =	$( "#pagoacredito_nombre" ).val();
+      data['pagoacredito[cantidad]'] =	$( "#pagoacredito_cantidad" ).val();
+      data['pagoacredito[estado]'] =	$( "#pagoacredito_estado" ).val();
+      data['pagoacredito[unidad]'] =	$( "#pagoacredito_unidad" ).val();
+      data['pagoacredito[predeterminada]'] =	$( "#pagoacredito_predeterminada:checked" ).length;
+      var moneda_ids = new Array();
+      $(".moneda:checked").each(function(){
+
+        moneda_ids.push(parseInt($(this).attr("data")));
+
+      });
+      data['pagoacredito[moneda_ids][]'] =	moneda_ids;
+      data['commit'] = "Update Pagoacredito"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/pagoacreditos<% if (@pagoacredito.id==nil) %>.json/ <% else %>/<%= @pagoacredito.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar" ).button( "enable" )
+          if (json_data.id){
+            $("#texto_error").html("");
+            tab_selected.click();
+            closeIframe("/pagoacreditos<% if (@pagoacredito.id==nil) %>/new<% else %>/<%= @pagoacredito.id %>/edit<%end%>");
+          }else{
+            $("#texto_error").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error").html($("#texto_error").html()+error);
+
+            }
+          }
+
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar" ).button( "enable" )
+          $("#texto_error").html("");
+          for (var i in xhr){
+            var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+xhr[i]+'.</p></div><br/>';
+            $("#texto_error").html($("#texto_error").html()+error);
+
+          }
+        }
+      });
+      return false;
+    });
+  });
+</script>
+<%= form_for(@pagoacredito) do |f| %>
+  <% if @pagoacredito.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@pagoacredito.errors.count, "error") %> prohibited this pagoacredito from being saved:</h2>
+
+      <ul>
+        <% @pagoacredito.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div id="texto_error"> </div>
+  <div class="field">
+    <%= f.label :nombre %>
+    <div class ="combobox"><%= f.text_field :nombre, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :Tiempo %>
+    <div class ="combobox" style="padding-left: 148px;"><%= f.label :Cantidad %><%= f.number_field :cantidad, :size =>10, :class =>  'text ui-widget-content ui-corner-all' %></div>
+    <div class ="combobox"  style="float: right;left:0px;top: -40px; padding-left:0;"> <%= f.label :Unidad %> <%= f.enum_select :unidad, :size =>10, :class =>  'text ui-widget-content ui-corner-all', :style => 'padding-left: 0px;'%>  </div>
+  </div>
+
+  <div class="field">
+    <%= f.label :estado %>
+    <div class ="combobox">  <%= f.enum_select :estado, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %>  </div>
+
+
+  </div>
+
+  <div class="field">
+    <%= f.label :predeterminada %>
+    <div class ="combobox"><%= f.check_box :predeterminada %></div>
+  </div>
+
+
+
+
+  <div class="field" >
+    <%= f.label :monedas %><br/>
+    <% for mon in Moneda.all %>
+      <% if @pagoacredito.id == nil %>
+        <%= check_box_tag "pagoacredito[moneda_ids][]", mon.id , false ,:class => "moneda" ,:data => mon.id%>
+      <% else %>
+        <%= check_box_tag "pagoacredito[moneda_ids][]", mon.id , @pagoacredito.moneda.include?(mon) ,:class => "moneda" ,:data => mon.id%>
+      <% end %>
+      <%= label_tag "pagoacredito[moneda_ids][]", mon.nombre, :for => "pagoacredito[moneda_ids][]" %><br />
+    <% end %>
+  </div>
+
+  <div class="actions" >
+    <a id="guardar"><%if (@pagoacredito.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+<% end %>

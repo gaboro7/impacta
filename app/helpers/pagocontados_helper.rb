@@ -1,0 +1,2 @@
+module PagocontadosHelper
+end

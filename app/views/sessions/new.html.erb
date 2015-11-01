@@ -1,0 +1,76 @@
+<% @random = (0...8).map{65.+(rand(25)).chr}.join %>
+<style type="text/css">
+			/*demo page css*/
+			select{ width: 200px;
+
+
+                        }
+
+                        .combobox{
+                          padding-left:150px;
+                          position: relative;
+                          top : -18px;
+                        }
+
+
+
+</style>
+<script>
+  $(function() {
+    //Spanish (Espa&ntilde;ol)
+    $( this ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#iniciarSesion").click();
+        }
+     });
+     $('body').css({'backgroundImage' :"url('/images/fp_backgroundLg.jpg')"});
+    $( "#iniciarSesion" ).button();
+    $( "#iniciarSesion" ).click(function() {
+      $(this).button( "disable" );
+      var data = new Object();
+
+      data['session[nombre]'] =	$( "#session_nombre" ).val();
+
+      data['session[password]'] =	$( "#session_password" ).val();
+
+
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/sessions",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+       $( "#iniciarSesion" ).button( "enable" )
+       //   $("#falsecontex<%= @random %>").html(json_data);
+        window.location = "/";
+        },
+        error: function( xhr, status, index, anchor ) {
+         
+        }
+      });
+      return false;
+    });
+  });
+</script>
+<div id="falsecontex<%= @random %>">
+  <h3 class="ui-widget" style="color:#ffffff">Iniciar Sesión</h3>
+<%= form_for(:session, :url => sessions_path) do |f| %>
+
+    <%= flash.now[:error] unless flash.now[:error].nil? %>
+
+    <div class="field">
+        <%= f.label :nombre ,:class =>  'ui-widget',:style => "color:#ffffff" %>
+      <div class ="combobox"><%= f.text_field :nombre,:class =>  'text ui-widget-content ui-corner-all' %></div>
+    </div>
+
+    <div class="field">
+        <%= f.label :password,:class =>  'ui-widget' ,:style => "color:#ffffff"  %>
+      <div class ="combobox"> <%= f.password_field :password,:class =>  'text ui-widget-content ui-corner-all' %></div>
+    </div>
+
+   <div class="actions" >
+    <a id="iniciarSesion">Iniciar Sesión</a>
+  </div>
+<% end %>
+</div>

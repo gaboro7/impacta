@@ -1,0 +1,14 @@
+<div id="rolarticulos">
+<% for rol in @rolarticulos %>
+  <div class="rolarticulo">
+  </div>
+<% end %>
+</div>
+
+
+<h2>New Comment</h2>
+
+<% form_for [@rola, Rolarticulo.new] do |f| %>
+  
+  <p><%= f.submit "Submit" %></p>
+<% end %>

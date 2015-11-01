@@ -1,0 +1,10 @@
+
+        
+    
+            <% if signed_in? %>
+            <%= button_to "Cerrar Sesión", signout_path, :method => :delete, :id => :singout , :class=> :ini_boton %>
+            <% else %>
+            <%= button_to "Sign in", signin_path , :id =>:singout , :class=> :ini_boton%>
+            <% end %>
+        
+

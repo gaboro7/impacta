@@ -1,0 +1,20 @@
+<h1>Editing articulocomp</h1>
+
+<%= render 'form' %>
+
+<h1>Te suma a vos mismo en el combo capas que habria que tocar para que no salga mejor por que le voy a meter un control??</h1>
+
+
+<% @rola = @articulocomp %>
+
+
+<% for c in @articulocomp.rolarticulos 
+    @rol = c
+    %>  
+<%=    render :template =>  "comercializables/edit" %>
+
+<% end %>
+
+
+<%= link_to 'Show', @articulocomp %> |
+<%= link_to 'Back', articulocomps_path %>

@@ -1,0 +1,30 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Recibo:</b>
+  <%= @renglon_recdetalle.recibo_id %>
+</p>
+
+<p>
+  <b>Detalle:</b>
+  <%= @renglon_recdetalle.detalle %>
+</p>
+
+<p>
+  <b>Subtotal linea:</b>
+  <%= @renglon_recdetalle.subtotal_linea %>
+</p>
+
+<p>
+  <b>Impuestos:</b>
+  <%= @renglon_recdetalle.impuestos %>
+</p>
+
+<p>
+  <b>Total linea:</b>
+  <%= @renglon_recdetalle.total_linea %>
+</p>
+
+
+<%= link_to 'Edit', edit_renglon_recdetalle_path(@renglon_recdetalle) %> |
+<%= link_to 'Back', renglon_recdetalles_path %>

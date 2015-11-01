@@ -1,0 +1,436 @@
+
+<script>
+  var pre_descuento = <%if (@renglon_factura != nil) %><%=  @renglon_factura.descuento  %> <%else%>null<%end;%>;
+  var valor_impuesto = 0;
+
+  //tipo 0: precioReal = precio * descuento = precio * MAX{desc_lista, desc_art, desc_cli, desc_promo}
+  //tipo 1: precioReal = precio * descuento = precio * MAX{desc_lista, desc_art, desc_cli} * desc_promo
+  var config_tipo_calc_promo = <%= Setting.tipo_calc_promo %> ;
+  var descuento_promo = 0; //se usa cuando config_tipo_calc_promo = 1
+
+  var texto_decuento_por = "";
+  var texto_decuento_adicional = "";
+  var texto_descuento_por_ad = "";
+
+  var precio_unitario;
+  var descuento;
+  var renglon_factura_comercializable_id = <%if (@renglon_factura != nil) %><%=@renglon_factura.comercializable_id %> <%else%>null<%end;%>;
+
+  //admite el descuento ocasional o no
+  <%Setting.config_alow_desc_oc = 0%>
+
+  var descuento_ocascional = 0;
+
+  $(function() {
+
+    <% @rand =  (0...8).map{65.+(rand(25)).chr}.join  %>
+
+    <%if (@renglon_factura != nil) %>
+        cargarDatos<%= @rand %>(<%=@renglon_factura.comercializable_id %>);
+    <%end%>
+
+    <%if (Setting.config_alow_desc_oc == 1)%>
+         $( "#factura_descuento_ocasional<%= @rand %>" ).keyup(function(e){
+            descuento_ocascional = parseFloat($( "#factura_descuento_ocasional<%= @rand %>" ).val());
+         });
+    <% end %>
+
+    <%if (Setting.config_alow_desc_oc == 1)%>
+        $("#descuentoOcacional<%= @rand %>").show(); // sin "Highlight"
+    <%else%>
+        $("#descuentoOcacional<%= @rand %>").hide();
+    <%end%>
+
+    $("#comercializable_id<%= @rand %> ").focus();
+
+    $( "#renglon_factura_cantidad<%= @rand %>" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar_renglon<%= @rand %>").click();
+        }
+     });
+
+    $( "#descuento_aplicado<%= @rand %>" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar_renglon<%= @rand %>").click();
+        }
+     });
+
+     $( "#renglon_factura_comentario<%= @rand %>" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar_renglon<%= @rand %>").click();
+        }
+     });
+
+     $( "#factura_descuento_ocasional<%= @rand %>" ).keyup(function(e){
+        if(e.keyCode == 13){
+            $("#guardar_renglon<%= @rand %>").click();
+        }
+
+        <%if( Setting.config_alow_desc_oc == 1 )%>
+        if((e.keyCode >= 48 && e.keyCode <= 57)||(e.keyCode >= 96 && e.keyCode <= 105)){
+             if (descuento_ocascional > 0){
+                 texto_decuento_adicional = " más " + descuento_ocascional + "% Adicional"
+             }else{
+                 texto_decuento_adicional = ""
+             }
+             $("#descuento_mensaje<%= @rand %>").html(texto_descuento_por_ad + texto_decuento_adicional);
+             var desc_ant = (descuento+descuento_promo) - ((descuento*descuento_promo)/100)
+             $("#descuento<%= @rand %>").val(reondeo((desc_ant+(descuento_ocascional*1.00)) - ((desc_ant*(descuento_ocascional*1.00))/100)));
+             $( "#renglon_factura_total_impuestos<%= @rand %>" ).val(reondeo( ($( "#renglon_factura_precio_unitario<%= @rand %>" ).val() * (1 - ($( "#descuento<%= @rand %>").val()/100))) * ($( "#renglon_factura_cantidad<%= @rand %>" ).val()) * (valor_impuesto/100) ));
+             $( "#renglon_factura_total_renglon<%= @rand %>" ).val(reondeo( ($( "#renglon_factura_precio_unitario<%= @rand %>" ).val() * (1 - ($( "#descuento<%= @rand %>").val()/100))) * ($( "#renglon_factura_cantidad<%= @rand %>" ).val()) + ($( "#renglon_factura_total_impuestos<%= @rand %>" ).val())*1 ));
+        }
+        <%end%>
+     });
+
+
+
+    $( "#guardar_renglon<%= @rand %>" ).button();
+    $( "#guardar_renglon<%= @rand %>" ).click(function() {
+    $( "#guardar_renglon<%= @rand %>" ).button( "disable" );
+    var data = new Object();
+    <% if(@renglon_factura != nil) %>
+        data["_method"] =	"put";
+
+    <% end; %>
+      data['renglon_factura[cantidad]'] =	$( "#renglon_factura_cantidad<%= @rand %>" ).val();
+      data['renglon_factura[comercializable_id]'] =	renglon_factura_comercializable_id;//$( "#renglon_factura_comercializable_id<%= @rand %>" ).val();
+      data['renglon_factura[precio_unitario]'] =	$( "#renglon_factura_precio_unitario<%= @rand %>" ).val();
+      data['renglon_factura[total_impuestos]'] =	$( "#renglon_factura_total_impuestos<%= @rand %>" ).val();
+      data['renglon_factura[total_renglon]'] =	$( "#renglon_factura_total_renglon<%= @rand %>" ).val() - $( "#renglon_factura_total_impuestos<%= @rand %>" ).val();
+      data['renglon_factura[comentario]'] =	$( "#renglon_factura_comentario<%= @rand %>" ).val();
+      data['renglon_factura[descuento]'] =	$( "#descuento<%= @rand %>" ).val();
+
+      data['commit'] = "Create factura"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/facturas/<%= @factura.id %>/renglon_facturas<% if (@renglon_factura==nil) %>.json/ <% else %>/<%= @renglon_factura.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar_renglon<%= @rand %>" ).button( "disable" )
+          if (json_data.id){
+            $("#texto_error<%= @rand %>").html("");
+            <% if (@renglon_factura!=nil) %>
+                closeIframe("/facturas/<%= @factura.id %>/renglon_facturas/<%= @renglon_factura.id %>/edit",0);
+
+            <%end%>
+            reloadIframe("/facturas/<%= @factura.id %>/edit")
+          }else{
+            $("#texto_error_inner<%= @rand %>").html("");
+            $( "#guardar_renglon<%= @rand %>" ).button( "enable" )
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+
+            }
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar_renglon<%= @rand %>" ).button( "enable" )
+          $("#texto_error_inner<%= @rand %>").html("");
+          
+          var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>0:</strong> Error interno.</p></div><br/>';
+          $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+
+        }
+      });
+      return false;
+    });
+
+   // $( "#renglon_factura_comercializable_id<%= @rand %>" ).change(function(){
+   function cargarDatos<%= @rand %>(com_id){
+      $.ajax({
+        type: "GET",
+        url: "/listaprecios/getPrecioArticuloCliente.json?cliente_id="+<%=@factura.comerciante.id%>+"&comercializable_id="+ com_id +"&factura_id=<%= @factura.id %>",
+        context: document.body,
+        success: function(data){
+          try
+          {
+            descuento_promo = 0;
+            if (pre_descuento != null){
+                descuento = pre_descuento;
+            }else{
+                if (config_tipo_calc_promo == 0){
+                    descuento = Math.max( data.precio[0].descuento, data.articulo.descuento, data.cliente.pdescuento,(data.promociones != undefined && data.promociones.length > 0)?data.promociones[0].descuento:0,
+                    (data.desc_cli_articulo != undefined && data.desc_cli_articulo.length > 0)?data.desc_cli_articulo[0].descuento:0 );
+                }else{
+                    descuento = Math.max( data.precio[0].descuento, data.articulo.descuento, data.cliente.pdescuento, (data.desc_cli_articulo != undefined && data.desc_cli_articulo.length > 0)?data.desc_cli_articulo[0].descuento:0);
+                    descuento_promo = (data.promociones != undefined && data.promociones.length > 0)?data.promociones[0].descuento:0;
+                }
+                if(descuento > 0){
+                    var coma = false;
+                    texto_decuento_por = "";
+                    if(data.cliente.pdescuento == descuento ){
+                        texto_decuento_por +=  "Cliente";
+                        coma = true;
+                    }
+                    if(data.articulo.descuento == descuento){
+                        if (coma!=false){
+                            texto_decuento_por += ", ";
+                        }
+                        coma = true;
+                        texto_decuento_por += "Artículo"
+                    }
+                    if(data.precio[0].descuento == descuento){
+                        if (coma!=false){
+                            texto_decuento_por += ", ";
+                        }
+                        coma = true;
+                        texto_decuento_por += "Lista"
+                    }
+                    if((data.desc_cli_articulo != undefined && data.desc_cli_articulo.length > 0) && data.desc_cli_articulo[0].descuento == descuento){
+                        if (coma!=false){
+                            texto_decuento_por += ", ";
+                        }
+                        coma = true;
+                        texto_decuento_por += "Producto"
+                    }
+                    if (config_tipo_calc_promo == 0){
+                         if (descuento_promo == descuento){
+                             if (coma!=false){
+                                texto_decuento_por += ", ";
+                             }
+                             coma = true;
+                             texto_decuento_por += "Promoción"
+                         }
+                    }
+                    <%if( Setting.config_alow_desc_oc == 1 )%>
+                         if (descuento_ocascional > 0){
+                             texto_decuento_adicional = " más " + descuento_ocascional + "% Adicional"
+                         }else{
+                             texto_decuento_adicional = ""
+                         }
+                    <%else%>
+                          texto_decuento_adicional = ""
+                    <%end%>
+                }
+            }
+            if (pre_descuento == null){
+                if (descuento > 0){
+                    if (descuento_promo > 0){
+                        texto_descuento_por_ad =  "Aplica " + descuento + "% por "+ texto_decuento_por + " más " + descuento_promo + "% por Promoción"
+                    }else{
+                        texto_descuento_por_ad = "Aplica " + descuento + "% por "+ texto_decuento_por
+                    }
+                }else{
+                     if (descuento_promo > 0){
+                        texto_descuento_por_ad = "Aplica "  + descuento_promo + "% por Promoción"
+                    }
+                }
+                $("#descuento_mensaje<%= @rand %>").html(texto_descuento_por_ad + texto_decuento_adicional);
+            }
+
+            pre_descuento = null;
+            if(config_tipo_calc_promo == 1){
+                $("#descuento<%= @rand %>").val(reondeo((descuento+descuento_promo) - ((descuento*descuento_promo)/100)));
+            }else{
+                $("#descuento<%= @rand %>").val(descuento);
+            }
+
+            <%if( Setting.config_alow_desc_oc == 1 )%>
+                var desc_ant = parseFloat($("#descuento<%= @rand %>").val());
+                $("#descuento<%= @rand %>").val(reondeo((desc_ant+(descuento_ocascional*1.00)) - ((desc_ant*(descuento_ocascional*1.00))/100)));
+            <%end%>
+
+            precio_unitario = data.precio[0].precio;
+            $( "#renglon_factura_precio_unitario<%= @rand %>" ).val(reondeo(precio_unitario*(1/tipocambio)));
+            var impuesto = 0;
+            $("#impuesto_aplicado<%= @rand %>").html(" : ");
+            valor_impuesto = 0;
+            for(var i in data.articulo.impuestos){
+              //valor_impuesto = valor_impuesto + precio_unitario * ( data.articulo.impuestos[i].porcentajea/100);
+              if(i!=0){
+                $("#impuesto_aplicado<%= @rand %>").append(", ");
+              }
+              valor_impuesto = valor_impuesto + data.articulo.impuestos[i].porcentajea;
+              impuesto = ( data.articulo.impuestos[i].porcentajea);
+              $("#impuesto_aplicado<%= @rand %>").append(data.articulo.impuestos[i].nombre + " "+impuesto + "%");
+            }
+            if(valor_impuesto == 0){
+              $("#impuesto_aplicado<%= @rand %>").append("No tiene impuestos");
+            }
+            $( "#renglon_factura_subtotal_renglon<%= @rand %>" ).val(reondeo( $( "#renglon_factura_precio_unitario<%= @rand %>" ).val() * $( "#renglon_factura_cantidad<%= @rand %>" ).val()));
+            // cuando config_tipo_calc_promo == 1 => descuento_promo = 0 entonces no aplica el decuento promo pq esta incluido en max descuentos
+            $( "#renglon_factura_total_impuestos<%= @rand %>" ).val(reondeo( ($( "#renglon_factura_precio_unitario<%= @rand %>" ).val()*(1-descuento/100)*(1-descuento_promo/100)) * ($( "#renglon_factura_cantidad<%= @rand %>" ).val()) * (valor_impuesto/100) ));
+            $( "#renglon_factura_total_renglon<%= @rand %>" ).val(reondeo( ($( "#renglon_factura_precio_unitario<%= @rand %>" ).val()*(1-descuento/100)*(1-descuento_promo/100)) * ($( "#renglon_factura_cantidad<%= @rand %>" ).val()) + ($( "#renglon_factura_total_impuestos<%= @rand %>" ).val())*1 ));
+          }catch(err)
+          {
+
+            //Handle errors here
+          }
+        }
+      });
+
+    }//);
+
+    $( "#descuento<%= @rand %>").keyup(function(e){
+          if ($( "#descuento<%= @rand %>").val() > 100){
+              $( "#descuento<%= @rand %>").val(100)
+          }
+          if((e.keyCode >= 48 && e.keyCode <= 57)||(e.keyCode >= 96 && e.keyCode <= 105)){
+            $("#descuento_mensaje<%= @rand %>").html("Se ingresa un descuento puntual");
+          }
+          $( "#renglon_factura_total_impuestos<%= @rand %>" ).val(reondeo( ($( "#renglon_factura_precio_unitario<%= @rand %>" ).val() * (1 - ($( "#descuento<%= @rand %>").val()/100))) * ($( "#renglon_factura_cantidad<%= @rand %>" ).val()) * (valor_impuesto/100) ));
+          $( "#renglon_factura_total_renglon<%= @rand %>" ).val(reondeo( ($( "#renglon_factura_precio_unitario<%= @rand %>" ).val() * (1 - ($( "#descuento<%= @rand %>").val()/100))) * ($( "#renglon_factura_cantidad<%= @rand %>" ).val()) + ($( "#renglon_factura_total_impuestos<%= @rand %>" ).val())*1 ));
+    });
+
+    $( "#renglon_factura_cantidad<%= @rand %>" ).keyup(function(){
+      $( "#renglon_factura_subtotal_renglon<%= @rand %>" ).val(reondeo( $( "#renglon_factura_precio_unitario<%= @rand %>" ).val() * $( "#renglon_factura_cantidad<%= @rand %>" ).val()));
+      $( "#renglon_factura_total_impuestos<%= @rand %>" ).val(reondeo( ($( "#renglon_factura_precio_unitario<%= @rand %>" ).val() * (1 - ($( "#descuento<%= @rand %>").val()/100))) * ($( "#renglon_factura_cantidad<%= @rand %>" ).val()) * (valor_impuesto/100) ));
+      $( "#renglon_factura_total_renglon<%= @rand %>" ).val(reondeo( ($( "#renglon_factura_precio_unitario<%= @rand %>" ).val() * (1 - ($( "#descuento<%= @rand %>").val()/100))) * ($( "#renglon_factura_cantidad<%= @rand %>" ).val()) + ($( "#renglon_factura_total_impuestos<%= @rand %>" ).val())*1 ));
+    });
+
+
+    $( "#comercializable_id<%= @rand %>" ).autocomplete({
+      source: function( request, response ) {
+         var search = request.term;
+        if(request.term == "no search")
+          search = "";
+        var url = "/articuloinds.json?comercializable="+search+"&lista_precio_id=<%= @factura.comerciante.listaprecio.id %>";
+        $.ajax({
+          url: url,
+          success: function( data ) {
+
+            if(data.length == 0){
+              data = [{
+                  id :-1,
+                  texto: "no se encontraron resultados"
+                }];
+            }
+            response( $.map( data, function( item ) {
+              if (item.id == -1){
+                return {
+                  label: "no se encotraron resultados" ,
+                  value: request.term,
+                  id :item.id
+                }
+              }else{
+                return {
+                  label: "<" + item.id + ">" + item.nombre ,
+                  value:  item.nombre ,
+                  id :item.id,
+                  complete_data : item
+                }
+              }
+            })
+          );
+          },
+          error: function( xhr, status, index, anchor ) {
+            return {
+              label: 'no se econtro reultado' ,
+              value: request.term,
+              id :-1
+            }
+          }
+        });
+      },
+      minLength: 1,
+      select: function( event, ui ) {
+
+        if(ui.item.id != -1){
+          renglon_factura_comercializable_id = ui.item.complete_data.id;
+          cargarDatos<%= @rand %>(ui.item.complete_data.id);
+          $("#nombre_producto<%= @rand %>").html(ui.item.label);
+          setTimeout(
+                  function(){
+                      $( "#comercializable_id<%= @rand %>" ).val("");
+                      $("#renglon_factura_cantidad<%= @rand %>").focus();
+                  },100);
+         
+        }
+        // showIframe("/articuloinds/"+ui.item.id+"/edit","Editar Articulo",500,500);
+      },
+      open: function() {
+        $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+      },
+      close: function() {
+        $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+      }
+    });
+
+
+  });
+</script>
+<% if  (@renglon_factura==nil) %>
+  <% @renglon_factura = RenglonFactura.new %>
+<% end %>
+
+<%= form_for([@factura,@renglon_factura]) do |f| %>
+  <% if @factura.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@factura.errors.count, "error") %> prohibited this renglon_factura from being saved:</h2>
+
+      <ul>
+        <% @factura.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div id="texto_error_inner<%= @rand %>"> </div>
+
+  <div class="field">
+    </div>
+
+  <div class="field">
+    <label for="renglon_factura_Articulos">Art&iacute;culos</label>
+
+    <% if @factura.comerciante.listaprecio!=nil %><!--(:include => :rola)-->
+      <div class ="combobox">
+
+        <!--<%= f.collection_select(:comercializable_id, Comercializable.get_comercializable_cliente(@factura.comerciante.listaprecio.id) , :id,:nombreart , {:prompt => 'Agregar un Artículo'}, :class =>  'text ui-widget-content ui-corner-all',:tabindex=>1,:id => "renglon_factura_comercializable_id" + @rand.to_s ) %>-->
+        <%= f.text_field :comercializable_id , :size =>20, :class =>  'filtro' ,:id => "comercializable_id" + @rand.to_s  ,:style=>"width: 18em !important;" ,:tabindex=>1%>
+        <span id="nombre_producto<%= @rand %>" style="color: red;"><%if (@renglon_factura.comercializable != nil) %><%=  @renglon_factura.comercializable.nombreart  %> <%end;%></span>
+      </div>
+        <%= f.label :cantidad %>
+        <div class ="combobox">  <%= f.text_field :cantidad , :size =>20,:tabindex=>2, :class =>  'text ui-widget-content ui-corner-all' ,:id => "renglon_factura_cantidad" + @rand.to_s %></div>
+
+        <span id="descuento_aplicado<%= @rand %>" style="color: red;">Descuento</span>
+        <div class ="combobox">  <%= f.text_field :descuento,:tabindex=>3, :size =>20, :class =>  'text ui-widget-content ui-corner-all' ,:id => "descuento" + @rand.to_s %>
+        <span id="descuento_mensaje<%= @rand %>" style="color: red;"></span>
+        </div>
+    <%else%>
+      <span id="descuento_aplicado<%= @rand %>" style="color: red;">El cliente no tiene productos asociados. Ir a lista de precios </span>
+    <%end%>
+  </div>
+
+  <div class="field">
+    <%= f.label :comentario %>
+    <div class ="combobox"> <%= f.text_field :comentario,:tabindex=>4, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => "renglon_factura_comentario" + @rand.to_s %></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :precio_unitario %>
+    <div class ="combobox"> <%= f.text_field :precio_unitario , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_factura_precio_unitario" + @rand.to_s,:readonly=>"readonly" %></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :total_impuestos %>
+    <div class ="combobox">  <%= f.text_field :total_impuestos , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_factura_total_impuestos" + @rand.to_s ,:readonly=>"readonly"%> <span id="impuesto_aplicado<%= @rand %>" style="color: red;"></span> </div>
+  </div>
+
+  <div class="field">
+    <label for="renglon_factura_subtotal_renglon">Subtotal</label>
+    <div class ="combobox">  <%= f.text_field :total_renglon , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_factura_subtotal_renglon" + @rand.to_s ,:readonly=>"readonly"%></div>
+  </div>
+
+  <div class="field" style="position: absolute; <%if (@renglon_factura.id != nil) %>top: 224px;<%else%>top: 268px;<%end;%> left: 377px;">
+    <label for="renglon_factura_total_renglon">Total rengl&oacute;n</label>
+    <div class ="combobox">  <%= f.text_field :total_renglon , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_factura_total_renglon" + @rand.to_s ,:readonly=>"readonly"%></div>
+  </div>
+
+  <div class="field" id="descuentoOcacional<%= @rand %>" style="position: absolute; top: 104px; left: 377px;">
+    <label for="factura_descuento_ocasional">Descuento Adicional</label>
+    <div class ="combobox"><input id = "factura_descuento_ocasional<%= @rand %>" class="text ui-widget-content ui-corner-all" type="text" value="0" size="20" name="factura_descuento_ocasional" autocomplete="off"></input></div>
+  </div>
+
+  <div class="actions" >
+    <a id="guardar_renglon<%= @rand %>" tabindex=5><%if (@renglon_factura.id != nil) %>Guardar Cambios <%else%>Agregar rengl&oacute;n<%end;%> </a>
+  </div>
+
+<% end %>
+
+
+
+

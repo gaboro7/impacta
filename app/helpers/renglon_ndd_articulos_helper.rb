@@ -1,0 +1,2 @@
+module RenglonNddArticulosHelper
+end

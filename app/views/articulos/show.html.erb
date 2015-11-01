@@ -1,0 +1,22 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Nombre:</b>
+  <%= @articulo.nombre %>
+</p>
+
+<p>
+  <b>Descripci&oacute;n:</b>
+  <%= @articulo.descripcion %>
+</p>
+
+<h2>rolarticulo</h2>
+<%= render @articulo.rolarticulos %>
+ 
+<h2>Agregar rolarticulo:</h2>
+
+<%= render "rolarticulos/form" %>
+
+
+<%= link_to 'Edit', edit_articulo_path(@articulo) %> |
+<%= link_to 'Back', articulos_path %>

@@ -1,0 +1,30 @@
+<script type="text/javascript">
+  limpiar_paginado();
+</script>
+<table>
+    <tr>
+      <th class ="ui-state-active" width ="200">ID</th>
+      <th class ="ui-state-active" width ="200">Cliente</th>
+      <th class ="ui-state-active" width ="200">Estado</th>
+      <th class ="ui-state-active" width ="200">Comentario</th>
+      <th class ="ui-state-active" width ="200">Total</th>
+      <th class ="ui-state-active" width ="200">Fecha</th>
+      <th class ="ui-state-active"></th>
+      <th class ="ui-state-active"></th>
+    </tr>
+
+    <% @notadedebitos.each do |notadedebito| %>
+      <tr>
+        <td  class="ui-state-default ui-corner-all"><%= notadedebito.id %></td>
+        <td  class="ui-state-default ui-corner-all"><%= notadedebito.comerciante.nombre %></td>
+        <td  class="ui-state-default ui-corner-all"><%= (notadedebito.impresa)?"Impresa":(notadedebito.anulada)?"Anulada":"S/Imprimir" %></td>
+        <td  class="ui-state-default ui-corner-all"><%= notadedebito.detalle %></td>
+         <td  class="ui-state-default ui-corner-all"><%=  "%.2f"  %(notadedebito.total_sinimpuestos + notadedebito.total_impuestos) %></td>
+        <td  class="ui-state-default ui-corner-all"><%= notadedebito.fecha %></td>
+        <td  class="ui-state-default ui-corner-all"><a href ="#" data="<%=edit_notadedebito_path(notadedebito) %>" dataw="600"  datah="1000px" class="list_link" title="Editar Nota de Debito"><span class="ui-icon ui-icon-wrench"></span></a>
+        <td  class="ui-state-default ui-corner-all"><a href="#" action="/notadedebitos/<%=  notadedebito.id %>" class="delete_list" data-method="delete" title="Eliminar Nota de Debito"><span class="ui-icon ui-icon-trash"></span></a></td>
+
+      </tr>
+    <% end %>
+  </table>
+<%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>

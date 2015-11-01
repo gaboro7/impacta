@@ -1,0 +1,91 @@
+<% @rand = @contactable.class.name.to_s %>
+ <%
+      if @contactable.class.name == "Empresa"
+          @idemp = @contactable.id.to_s
+          @goto = "/empresas/"+@idemp
+          @dialog = "#modificar_contacto"
+      elsif @contactable.class.name == "Sucursal"
+          @idene = @contactable.empresa.id.to_s
+          @idenc = @contactable.id.to_s
+          @goto = "/empresas/"+@idene+"/sucursals/"+@idenc
+          @dialog = "#modificar_contacto"
+      end
+      %>
+<script>
+
+  $( "form" ).submit(function(event) {
+    event.preventDefault();
+    var self = this;
+
+  });
+  $('input').attr('autocomplete','off');
+</script>
+<script type="text/javascript">
+  $(function(){
+    // Datepicker
+    $( "#guardarContacto<%=@rand%>" ).button();
+    $( "#guardarContacto<%=@rand%>" ).click(function() {
+      var data = new Object();
+      data['contacto[comentarios]'] =	$( "#contacto_comentarios<%=@rand%>" ).val();
+      data['contacto[interno]'] =	$( "#contacto_interno<%=@rand%>" ).val();
+      data['contacto[nombre]'] =	$( "#contacto_nombre<%=@rand%>" ).val();
+      data['contacto[sector]'] =	$( "#contacto_sector<%=@rand%>" ).val();
+      data['commit'] =	"Create Contacto";
+      data["utf8"] =	true;
+
+     
+
+
+      $.ajax({
+        type: "POST",
+        url: "<%=@goto%>/contactos",
+        data: data,
+        context: document.body,
+        success: function(html_data){
+          <% if @contactable.class.name == "Sucursal" %>
+                reloadIframe("<%=@goto%>/edit",2);
+          <% else %>
+                reloadIframe("<%=@goto%>/edit",2);
+          <% end %>
+        }
+      });
+      return false;
+    });
+  });
+</script>
+<%= form_for([@contactable, Contacto.new]) do |f| %>
+
+  <% if @contactable.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@contactable.errors.count, "error") %> No se pudo agregar el Contacto :</h2>
+
+      <ul>
+        <% @contactable.errors.messages.each do |msg| %>
+          <li><%= msg[1][0] %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :nombre %>
+    <div class ="combobox">  <%= f.text_field :nombre , :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => "contacto_nombre" + @rand%></div>
+  </div>
+  <div class="field">
+    <%= f.label :sector %>
+   <div class ="combobox">  <%= f.text_field :sector , :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => "contacto_sector" + @rand%></div>
+  </div>
+  <div class="field">
+    <%= f.label :interno %>
+  <div class ="combobox">  <%= f.text_field :interno, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => "contacto_interno" + @rand %></div>
+  </div>
+  <div class="field">
+  <div>  <%= f.label :Comentarios %><br/>
+     <%= f.text_area :comentarios, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :style => 'height:150px;width:300px', :id => "contacto_comentarios" + @rand %></div>
+  </div>
+
+    <br/>
+  <div class="actions">
+    <a id="guardarContacto<%=@rand%>">Guardar Nuevo Contacto</a>
+  </div>
+<% end %>

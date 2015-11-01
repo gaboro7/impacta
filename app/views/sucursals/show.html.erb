@@ -1,0 +1,25 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Nombre:</b>
+  <%= @sucursal.nombre %>
+</p>
+
+<p>
+  <b>Domicilio:</b>
+  <%= @sucursal.domicilio %>
+</p>
+
+<p>
+  <b>Contactos:</b>
+  <%= render @sucursal.contactos %>
+</p>
+
+<h2>Add a contacto:</h2>
+<% @empresa = @sucursal.empresa %>
+<% @contactable = @sucursal %>
+<% @idsuc = @sucursal.id %>
+<%= render "contactos/formsuc" %>
+
+<%= link_to 'Edit', edit_empresa_sucursal_path(@sucursal.empresa, @sucursal) %> |
+<%= link_to 'Back', @sucursal.empresa %>

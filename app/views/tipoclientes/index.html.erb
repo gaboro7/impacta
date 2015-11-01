@@ -1,0 +1,29 @@
+<% if params[:numero_hoja].nil? %>
+<br />
+<a class="nuevo" href ="#" data="/tipoclientes/new" dataw="250"  datah="470px" title="Agregar Grupo de Clientes">Agregar Grupo de Clientes</a>
+<br /><br />
+<div id="listado">
+  <%  else %>
+    <script type="text/javascript">
+      limpiar_paginado();
+    </script>
+<% end %>
+<table>
+  <tr>
+    <th   class ="ui-state-active" width ="200">Nombre</th>
+    <th   class ="ui-state-active"></th>
+    <th   class ="ui-state-active"></th>
+  </tr>
+
+<% @tipoclientes.each do |tipocliente| %>
+  <tr>
+    <td  class="ui-state-default ui-corner-all"><%=  truncate(tipocliente.nombre , :length => 45) %></td>
+    <td  class="ui-state-default ui-corner-all"><a href ="#" data="<%=edit_tipocliente_path(tipocliente) %>" dataw="290"  datah="500px" class="list_link" title="Editar Grupo"><span class="ui-icon ui-icon-wrench"></span></a></td>
+    <td   class="ui-state-default ui-corner-all"><a href="#" action="/tipoclientes/<%=  tipocliente.id %>" class="delete_list" data-method="delete" title="Eliminar Grupo"><span class="ui-icon ui-icon-trash"></span></a></td>
+  </tr>
+<% end %>
+</table>
+<%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>
+<% if params[:numero_hoja].nil? %>
+</div>
+<% end %>

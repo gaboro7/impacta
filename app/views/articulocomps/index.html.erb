@@ -1,0 +1,21 @@
+<h1>Listing articulocomps</h1>
+
+<table>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @articulocomps.each do |articulocomp| %>
+  <tr>
+    <td><%= link_to 'Show', articulocomp %></td>
+    <td><%= link_to 'Edit', edit_articulocomp_path(articulocomp) %></td>
+    <td><%= link_to 'Destroy', articulocomp, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Articulocomp', new_articulocomp_path %>

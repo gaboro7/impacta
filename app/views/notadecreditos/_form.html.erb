@@ -1,0 +1,523 @@
+<% if params[:tipo].nil?
+  @titulo_del_boton = "Agregar nueva Nota de Crédito";
+  @titulo_ventana = "Editar Nota de Crédito"
+  @titulo_eliminar = "Eliminar Nota de Crédito"
+  @titulo_imprimir = "Imprimir Nota de Crédito"
+  @documento = "NOTA DE CREDITO"
+  @parametro = ""
+else
+  @titulo_del_boton = "Agregar nueva Nota de Devolución";
+  @titulo_ventana = "Editar Nota de Devolución"
+  @titulo_eliminar = "Eliminar Nota de Devolución"
+  @titulo_imprimir = "Imprimir Nota de Devolución"
+  @documento = "NOTA DE DEVOLUCION"
+  @parametro = "?tipo=devolucion"
+end %>
+
+<% @rand1 = (0...8).map{65.+(rand(25)).chr}.join %>
+<style>
+  .ui-autocomplete-loading {
+    background: white url('/images/ajax-loader.gif') right center no-repeat;
+  }
+  .filtro {
+    width: 25em;
+  }
+</style>
+
+<script>
+  var cliente_id = <% if (@notadecredito.id==nil) %>-1<%else%><%= @notadecredito.comerciante_id %> <%end%>;
+  var tipocambio = <%if (@notadecredito.id) %><%=  @notadecredito.moneda.tipodecambio  %><%else%>1<%end;%>;
+  var sucursal_id = <% if (@notadecredito.id==nil) %>-1<%else%><%= (@notadecredito.sucursal_id != nil)?@notadecredito.sucursal_id: "-1" %> <%end%>;
+
+  var conf_ingf_key = 45; // tecla insert
+  var conf_imp_key = 119; // tecla F8 para imprimir
+
+  // visualizacion de listado de clientes
+  // 0: e-> <id>e.nombre : s-> <id>s.nombre[s.empresa.nombre]
+  // 1: e-> <id>e.nombre[e.direccion] : s-> <id>s.nombre[s.dirección]
+  var conf_view_cli = 1;
+
+  // Recargar despues de imprimir 0 cerrar despues de imprimir 1
+  var conf_recargar_o_cerrar_desp_imp = 1;
+
+  function recargardespuesdeimprimir(){
+     if (conf_recargar_o_cerrar_desp_imp == 0){
+         reloadIframe("/notadecreditos/<%= @notadecredito.id %>/edit<%=@parametro%>");
+         tab_selected.click();
+         $('#imprimir_notacredito').dialog('close');
+     }else{
+         $('#imprimir_notacredito').dialog('close');
+         tab_selected.click();
+         closeIframe("/notadecreditos/<%= @notadecredito.id %>/edit<%=@parametro%>");
+     }
+  }
+
+  $(function() {
+    $("#anular").button();
+    $("#anular").click(function(){
+      $.ajax({
+        type: "GET",
+        url: "/notadecreditos/anular.json?id=<% if (@notadecredito.id!=nil) %><%= @notadecredito.id %><%end%>",
+        context: document.body,
+        success: function(json_data){
+          $( "#anular" ).button( "disable" )
+          if (json_data.id){
+            $("#texto_error").html("");
+            reloadIframe("/notadecreditos/<%= @notadecredito.id %>/edit");
+            tab_selected.click();
+          }else{
+            $( "#anular" ).button( "enable" )
+            $("#texto_error").html("");
+            for (var i in json_data){
+              var error = '<div i style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error").html($("#texto_error").html()+error);
+
+            }
+          }
+
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#anular" ).button( "enable" )
+          $("#texto_error").html("");
+          var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>0:</strong> Error interno.</p></div><br/>';
+          $("#texto_error").html($("#texto_error").html()+error);
+
+
+        }
+      });
+      return false;
+    });
+    $("#imprimir<%= @rand1 %>").button({
+      icons: {
+        primary: "ui-icon-print"
+      },
+      text: true
+    });
+  <% if (@notadecredito.id!=nil) %>
+     $("#imprimir<%= @rand1 %>").click(function(){
+
+        var serie = "";
+        var numero = 0;
+        $.ajax({
+          url: "/notadecreditos/proximo_preimpreso.json",
+          context: document.body,
+          success: function(data){
+            numero = data.numero;
+            serie = data.serie;
+            $( "#dialog-confirm-imprimir<%= @rand1 %>" ).html("Serie:  <input type='text' id='serie<%= @rand1 %>' value='"+serie+"'></input><br/>Numero  :<input type='text' id='numero<%= @rand1 %>' value='"+numero+"'></input>");
+            $( "#dialog-confirm-imprimir<%= @rand1 %>" ).dialog({
+              resizable: false,
+              height:140,
+              modal: true,
+              buttons: {
+                "Usar este numero": function() {
+                    imprimir_notadecredito();
+                },
+                "Cancelar": function() {
+                  $( this ).dialog( "close" );
+                }
+              },
+                open: function () {
+                     $("#numero<%= @rand1 %>").focus();
+                }
+            });
+
+          }
+        });
+
+      });
+
+      $( "#dialog-confirm-imprimir<%= @rand1 %>" ).keydown(function (event) {
+        if (event.keyCode == 13) {
+            imprimir_notadecredito();
+        }
+      });
+
+      $( this ).keypress(function(e){
+          if(e.keyCode == conf_imp_key){
+            <%if (@notadecredito.id!=nil)%>
+              $("#imprimir<%= @rand1 %>").click();
+            <%end%>
+          }
+      });
+
+      function imprimir_notadecredito() {
+          numero = $("#numero<%= @rand1 %>").val();
+          serie = $("#serie<%= @rand1 %>").val();
+          $( "#dialog-confirm-imprimir<%= @rand1 %>" ).dialog( "close" );
+
+          $.ajax({
+            url: "/notadecreditos/generar_impresion/?id=<% if (@notadecredito.id!=nil) %><%= @notadecredito.id %><%end%>&serie="+serie+"&numero="+numero,
+            context: document.body,
+            success: function(data){
+               if(data.impresa != true){
+                 $.each(data, function(i, item) {
+                    alert(data[i]);
+                 });
+
+           }else{
+              $('#imprimir_notacredito').dialog({
+                autoOpen: false,
+                width: 600,
+                modal: true,
+                height:400
+              });
+              $('#imprimir_notacredito').html('');
+              $('#imprimir_notacredito').html('<div id="altContent"><h1>notacredito</h1><p><a href="http://www.adobe.com/go/getflashplayer">Get Adobe Flash player</a></p></div>');
+              $('#imprimir_notacredito').dialog({ title: 'Imprimir notadecredito' });
+              $('#imprimir_notacredito').dialog('open');
+              $('#imprimir_notacredito').dialog({height: 120});
+              $('#imprimir_notacredito').dialog({width: 200});
+
+              var flashvars = {
+                id:<% if (@notadecredito.id!=nil) %><%= @notadecredito.id %><%end%>,
+                tipo_factura:"<%= @documento %>",
+                controler:'notadecreditos'
+              };
+              var params = {
+                menu: "false",
+                scale: "noScale",
+                allowFullscreen: "true",
+                allowScriptAccess: "always",
+                bgcolor: "",
+                wmode: "direct" // can cause issues with FP settings & webcam
+              };
+              var attributes = {
+                id:"imprimir_notacredito"
+              };
+
+              swfobject.embedSWF(
+              "swf/factura.swf",
+              "altContent", "100%", "100%", "10.0.0",
+              "swf/expressInstall.swf",
+              flashvars, params, attributes);
+              //  $('#imprimir_notacredito').dialog('close');
+            }
+          }
+          })
+      }
+
+ <% end  %>
+    var day = $( "#notadecredito_fecha" ).val();
+    $( "#notadecredito_fecha" ).datepicker( $.datepicker.regional[ "es" ] );
+    $( "#notadecredito_fecha" ).datepicker( "option", "dateFormat","yy-mm-dd" );
+    $( "#notadecredito_fecha" ).val(day);
+    $( "#guardar<%= @rand %>" ).button();
+    $( "#guardar<%= @rand %>" ).click(function() {
+      $(this).button( "disable" );
+      var data = new Object();
+    <% if(@notadecredito.id!=nil) %>
+        data["_method"] =	"put";
+    <% end; %>
+ <% if(@notadecredito.id!=nil)
+           if(@notadecredito.es_devolucion)
+              @devolucion = 'true'
+           else
+             @devolucion = 'false'
+           end
+        else
+          if params[:tipo].nil?
+            @devolucion = 'false'
+          else
+             @devolucion = 'true'
+          end
+      end; %>
+
+      data['notadecredito[es_devolucion]'] = <%=@devolucion%>;
+      data['cliente_id'] =	cliente_id;
+      data['notadecredito[rut]'] =	$( "#notadecredito_rut" ).val();
+      data['notadecredito[direccion_cliente]'] =	$( "#notadecredito_direccion_cliente" ).val();
+      data['notadecredito[detalle]'] =	$( "#notadecredito_detalle" ).val();
+      data['notadecredito[fecha]'] =	$( "#notadecredito_fecha" ).val();
+      data['notadecredito[moneda_id]'] = $( "#moneda" ).val();
+       if (sucursal_id != -1)
+        data['notadecredito[sucursal_id]'] = sucursal_id;
+
+
+      data['commit'] = "Create notadecredito"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/notadecreditos<% if (@notadecredito.id==nil) %>.json/ <% else %>/<%= @notadecredito.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar<%= @rand %>" ).button( "enable" )
+          if (json_data.id){
+            $("#texto_error").html("");
+            tab_selected.click();
+            <% if (@notadecredito.id==nil) %>
+                closeIframe("/notadecreditos/new<%=@parametro%>");
+                showIframe("/notadecreditos/"+json_data.id+"/edit<%=@parametro%>","<%=@titulo_ventana%>",900,600)
+            <%else%>
+                 reloadIframe("/notadecreditos/<%= @notadecredito.id %>/edit<%=@parametro%>");
+            <% end %>
+
+          }else{
+            $("#texto_error").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error").html($("#texto_error").html()+error);
+
+            }
+          }
+
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar<%= @rand %>" ).button( "enable" )
+          $("#texto_error").html("");
+
+            var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>0:</strong> Error Interno.</p></div><br/>';
+            $("#texto_error").html($("#texto_error").html()+error);
+
+
+        }
+      });
+      return false;
+    });
+
+    $( "#buscar_cliente" ).autocomplete({
+      source: function( request, response ) {
+
+        $.ajax({
+          url: "empresas.json?filtro="+request.term+"&contado=0",
+          success: function( data ) {
+            if(data.empresas.length == 0 && data.sucursales.length == 0){
+              data = [{
+                  id :-1
+                }];
+            }else{
+
+              var aux = new Array();
+              data = aux.concat(data.empresas,data.sucursales);
+
+            }
+            response( $.map( data, function( item ) {
+              if (item.id == -1){
+                return {
+                  label: "no se encotraron resultados" ,
+                  value: request.term,
+                  id :item.id
+                }
+              }else{
+                if (item.empresa){
+
+                  if (conf_view_cli == 0){
+                      return {
+                        label: "<" + item.id + ">" + item.nombre + " ["+ item.empresa.nombre+"]" ,
+                        value: "<" + item.id + ">" + item.nombre + " ["+ item.empresa.nombre+"]",
+                        id: item.empresa.id,
+                        sucursal_id : item.id,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                        rut : item.empresa.nif
+
+                      }
+                  }else{
+                      return {
+                        label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                        value: item.nombre,
+                        id: item.empresa.id,
+                        sucursal_id : item.id,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                        rut : item.empresa.nif
+
+                      }
+                  }
+                }else{
+                    if (conf_view_cli == 0){
+                      return {
+                        label: "<" + item.id + ">" + item.nombre ,
+                        value: "<" + item.id + ">" + item.nombre,
+                        id :item.id,
+                        sucursal_id : -1,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre,
+                        rut : item.nif
+
+                      }
+                    }else{
+                       return {
+                        label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]", //Casa central",
+                        value: item.nombre,
+                        id :item.id,
+                        sucursal_id : -1,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre,
+                        rut : item.nif
+
+                      }
+                    }
+                }
+              }
+            })
+          );
+          },
+          error: function( xhr, status, index, anchor ) {
+            return {
+              label: 'no se econtro reultado' ,
+              value: request.term,
+              id :-1
+            }
+          }
+        });
+      },
+      minLength: 1,
+      select: function( event, ui ) {
+        if(ui.item.id != -1){
+          // showIframe("/empresas/"+ui.item.id+"/edit","Editar Empresa",960,600);
+            sucursal_id =  ui.item.sucursal_id;
+          $( "#notadecredito_rut" ).val( ui.item.rut);
+          $( "#notadecredito_direccion_cliente" ).val(ui.item.domicilio);
+          $( "#notadecredito_comerciante_id" ).val(ui.item.id);
+
+            cliente_id = ui.item.id;
+            setTimeout(
+                  function(){
+                      $( "#notadecredito_detalle" ).focus();
+                  },100);
+        }
+      },
+      open: function() {
+        $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+      },
+      close: function() {
+        $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+      }
+    });
+
+    $( "#notadecredito_rut" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+     $( "#notadecredito_direccion_cliente" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+     $( "#notadecredito_detalle" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+
+
+    $( ".cliente_notadecredito" ).change(function(){
+      var url =   "/empresas/"+$( this ).val()+".json";
+      $.ajax({
+        url: url,
+        success: function(json_data){
+          if(json_data.id != -1){
+            $( "#notadecredito_rut" ).val( json_data.nif);
+            $( "#notadecredito_direccion_cliente" ).val(json_data.domicilio);
+           // $( "#notadecredito_comerciante_id" ).val(json_data.id);
+            cliente_id = json_data.id;
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+
+        }
+      });
+
+    })
+
+  });
+</script>
+
+
+<%= form_for(@notadecredito) do |f| %>
+  <% if @notadecredito.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@notadecredito.errors.count, "error") %> prohibited this notacredito from being saved:</h2>
+
+      <ul>
+        <% @notadecredito.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <br/>
+  <br/>
+  <div id="texto_error"> </div>
+
+    <div class="field">
+      <%= f.label :fecha %>
+      <%if (@notadecredito.id!=nil) %>
+         <div class ="combobox"> <%= f.text_field :fecha, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+      <%else%>
+         <div class ="combobox"> <%= f.text_field :fecha, :value => Time.now.strftime("%Y-%m-%d"), :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+      <%end%>
+     </div>
+
+
+   <% if(@notadecredito.id.nil?) %>
+
+  <div  style="position: relative;"><label for="filtro_cliente">Buscar Cliente </label>
+    <div class ="combobox">  <input id="buscar_cliente" style="width: 16em;" /></div>
+  </div>
+
+   <% end %>
+   <% if(!@notadecredito.id.nil?) and (!@notadecredito.numero.nil?)%>
+    <div class="field">
+      <%= f.label :numero %>
+      <div class ="combobox"> <%= f.label @notadecredito.numero %></div>
+    </div>
+  <% end %>
+
+  <% if (@notadecredito.id!=nil) %>
+ <div class="field" id="cliente">
+    <%= f.label :cliente %>
+    <div class ="combobox"><label><%=  @notadecredito.comerciante.nombre  %></label><% if @notadecredito.sucursal_id %> <br/>[<label><%= @notadecredito.sucursal.nombre%></label>]<% end %></div>
+  </div>
+  <% end %>
+
+ <div class="field" >
+    <label for="recibo_moneda">Moneda</label>
+    <div class ="combobox">    <%= f.collection_select(:moneda_id,Moneda.all, :id  , :nombre, {:prompt => false}, :class =>  'text ui-widget-content ui-corner-all', :id => 'moneda') %></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :rut %>
+    <div class ="combobox">  <%= f.text_field :rut , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+  </div>
+  <div class="field">
+    <%= f.label :direccion_cliente %>
+    <div class ="combobox">  <%= f.text_field :direccion_cliente , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+  </div>
+  <div class="field">
+    <%= f.label :comentario %>
+    <div class ="combobox"> <%= f.text_field :detalle, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+  </div>
+
+  <div class="actions" >
+    <%if (@notadecredito.id==nil) %>
+      <a id="guardar<%= @rand %>"><%if (@notadecredito.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+    <%else%>
+      <%if (!@notadecredito.impresa) %>
+       <a id="guardar<%= @rand %>"><%if (@notadecredito.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+      <%end%>
+    <%end%>
+
+    <%if (@notadecredito.id!=nil) %>
+
+      <%if (@notadecredito.id!=nil) && (!@notadecredito.anulada)%>
+        <%if (@notadecredito.impresa) and @notadecredito.anulable %>
+            <span id ="anular">Anular</span>
+        <%end%>
+        <span id ="imprimir<%= @rand1 %>"> <%if (@notadecredito.impresa) %>Re Imprimir<%else%><%=@titulo_imprimir%><%end%></span>
+      <% end %>
+
+    <% end %>
+    <%if (@notadecredito.id!=nil)&&(@notadecredito.anulada) %>
+        <span style="color: red;"> Anulada</span>
+    <% end %>
+  </div>
+  <div id="imprimir_notacredito"></div>
+<div id="dialog-confirm-imprimir<%= @rand1 %>"></div>
+
+<% end %>
+
+

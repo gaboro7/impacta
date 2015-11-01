@@ -1,0 +1,28 @@
+<h1>Listing renglon_recibos</h1>
+
+<table>
+  <tr>
+    <th>Factura</th>
+    <th>Total linea</th>
+    <th>Total impuestos</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @renglon_recibos.each do |renglon_recibo| %>
+  <tr>
+    <td><%= renglon_recibo.factura.numero %></td>
+    <td><%= renglon_recibo.total_linea %></td>
+    <td><%= renglon_recibo.total_impuestos %></td>
+    <td><%= renglon_recibo.total %></td>
+    <td><%= link_to 'Show', renglon_recibo %></td>
+    <td><%= link_to 'Edit', edit_renglon_recibo_path(renglon_recibo) %></td>
+    <td><%= link_to 'Destroy', renglon_recibo, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Renglon recibo', new_renglon_recibo_path %>

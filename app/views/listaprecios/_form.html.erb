@@ -1,0 +1,140 @@
+<script>
+  $(function() {
+    $( "#cliente" ).tabs();
+    $( "#guardar" ).button();
+    $( ".traer-lista" ).button();
+    $( ".traer-lista" ).click(function(){
+      $(this).button( "disable" );
+      $.ajax({
+        type: "GET",
+        url: "/listaprecios<% if (@listaprecio.id==nil) %> <% else %>/importarcliente.json?id=<%= @listaprecio.id %>&cliente_id=<%end%>"+$(this).attr("cliente_id"),
+        context: document.body,
+        success: function(json_data){
+          reloadIframe("/listaprecios/<% if (@listaprecio.id!=nil) %><%=@listaprecio.id%><% end %>/edit",0);
+        },
+        error: function( xhr, status, index, anchor ) {
+        }
+      });
+
+    });
+
+
+    $( "#guardar" ).click(function() {
+      $(this).button( "disable" );
+      var data = new Object();
+<% if(@listaprecio.id!=nil) %>
+        data["_method"] =	"put";
+<% end; %> 
+      data["listaprecio[predeterminada]"] =	$( "#listaprecio_predeterminada:checked" ).length;
+      data["listaprecio[nombre]"] =	$( "#listaprecio_nombre" ).val();
+    
+      var cliente_ids = new Array();
+      $(".cliente:checked").each(function(){
+
+        cliente_ids.push(parseInt($(this).attr("data")));
+
+      });
+      data['listaprecio[cliente_ids][]'] =	cliente_ids;
+      data['commit'] = "Update Listaprecios"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/listaprecios<% if (@listaprecio.id==nil) %>.json/ <% else %>/<%= @listaprecio.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar" ).button( "enable" )
+          if (json_data.id){
+            $("#texto_error").html("");
+            tab_selected.click();
+            <% if (@listaprecio.id==nil) %>
+              closeIframe("/listaprecios/new");
+              showIframe("/listaprecios/"+json_data.id+"/edit","Editar lista precios",900,600);
+             
+            <%else%>
+              closeIframe("/listaprecios/<%= @listaprecio.id %>/edit");
+            <%end%>
+          }else{
+            $("#texto_error").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error").html($("#texto_error").html()+error);
+
+            }
+          }
+
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar" ).button( "enable" )
+          $("#texto_error").html("");
+          for (var i in xhr){
+            var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+xhr[i]+'.</p></div><br/>';
+            $("#texto_error").html($("#texto_error").html()+error);
+
+          }
+        }
+      });
+      return false;
+    });
+  });
+</script>
+
+<style type="text/css">
+  
+
+</style>
+<%= form_for(@listaprecio) do |f| %>
+  <% if @listaprecio.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@listaprecio.errors.count, "error") %> No se pudo agregar la lista de Precio :</h2>
+
+      <ul>
+        <% @listaprecio.errors.messages.each do |msg| %>
+          <li><%= msg[1][0] %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div id="texto_error"> </div>
+  <div class="field">
+    <%= f.label :nombre %>
+    <div class ="combobox"><%= f.text_field :nombre, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+  </div>
+  <div class="field">
+    <%= f.label :predeterminada %>
+    <div class ="combobox"><%= f.check_box :predeterminada , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+  </div>
+
+  <div class="field" id="cliente" style="width:450px;">
+    <ul>
+      <li><a href="#lista_clientes_tab">Clientes asociados a la lista</a></li>
+      <li><a href="#lista_clientes_no_tab">Clientes asociados a otras listas</a></li>
+
+    </ul>
+    <div id="lista_clientes_tab" style="width: auto;height: 80px; overflow: auto">
+      <% if @listaprecio.id == nil %>
+        <% for cl in Cliente.all(:conditions => ["(listaprecio_id IS NULL)"]) %>
+          <spawn style="float:left;width: 180px">  <%= label_tag "listaprecio[cliente_ids][]", cl.nombre , :for => "listaprecio[cliente_id][]" %></spawn>
+            <%= check_box_tag "listaprecio[cliente_ids][]", cl.id ,false , :class => "cliente",:data => cl.id %><br/>
+
+        <% end %>
+      <% else %>
+        <% for cl in Cliente.all(:conditions => ["(listaprecio_id IS NULL) OR listaprecio_id = ?", @listaprecio.id]) %>
+        <div style="float:left;width:180px">   <%= label_tag "listaprecio[cliente_ids][]", cl.nombre , :for => "listaprecio[cliente_id][]" %></div>
+          <%= check_box_tag "listaprecio[cliente_ids][]", cl.id ,@listaprecio.clientes.include?(cl) , :class => "cliente",:data => cl.id%><br/>
+        <% end %>
+      <% end %>
+    </div>
+    <div id="lista_clientes_no_tab" style="width: auto;height: 80px; overflow: auto">
+      <% for cl in Cliente.all(:conditions => ["(listaprecio_id IS NOT NULL) AND listaprecio_id <> ?", @listaprecio.id]) %>
+        <div style="float:left;width:180px">   <%= label_tag "listaprecio[cliente_ids][]", cl.nombre , :for => "listaprecio[cliente_id][]" %></div>
+        <a class="traer-lista" cliente_id="<%= cl.id  %>">Importar desde(<%= cl.listaprecio.nombre  %>)</a> <br/>
+        <% end %>
+    </div>
+  </div>
+  <br/>
+  <div class="actions" >
+    <a id="guardar"><%if (@listaprecio.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div><br/>
+
+<% end %>

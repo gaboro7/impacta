@@ -1,0 +1,27 @@
+<tr>
+<th class="ui-state-default ui-corner-all" width="200px">
+ 
+  <%= contacto.nombre %>
+</th >
+
+<th class="ui-state-default ui-corner-all" width="200px">
+
+  <%= contacto.sector %>
+</th>
+<th class="ui-state-default ui-corner-all" width="200px">
+
+  <%= contacto.interno %>
+</th>
+
+
+
+<th class="ui-state-default ui-corner-all">
+  <a href ="#" data="<% if contacto.contactable.class.name == 'Empresa' %><%= edit_empresa_contacto_path(contacto.contactable,contacto) %> <% elsif (contacto.contactable.class.name == "Sucursal") %>/empresas/<%=@empresa.id%>/sucursals/<%=contacto.contactable.id%>/contactos/<%=  contacto.id %>/edit<% end %>"
+  dataw="900" datah="400"  class="edit_sub_link<%=@internal%>" title="Editar contacto"><span class="ui-icon ui-icon-wrench"></span></a>
+</th>
+
+<th class="ui-state-default ui-corner-all">
+ <a href="#" action="<% if contacto.contactable.class.name == 'Empresa' %>/empresas/<%=contacto.contactable.id%>/contactos/<%=  contacto.id %><% elsif (contacto.contactable.class.name == "Sucursal") %>/empresas/<%=@empresa.id%>/sucursals/<%=contacto.contactable.id%>/contactos/<%=  contacto.id %><% end %>" class="delete_sub_list<%=@internal%>" data-method="delete" title="Eliminar Contacto"><span class="ui-icon ui-icon-trash"></span></a>
+
+</th>
+</tr>

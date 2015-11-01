@@ -1,0 +1,45 @@
+<%= form_for(@cliente) do |f| %>
+  <% if @cliente.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@cliente.errors.count, "error") %> prohibited this cliente from being saved:</h2>
+
+      <ul>
+      <% @cliente.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :credito %><br />
+    <%= f.check_box :credito %>
+  </div>
+  <div class="field">
+    <%= f.label :precargo %><br />
+    <%= f.text_field :precargo %>
+  </div>
+  <div class="field">
+    <%= f.label :urecargo %><br />
+    <%= f.number_field :urecargo %>
+  </div>
+  <div class="field">
+    <%= f.label :trecargo %><br />
+    <%= f.enum_select :trecargo %>
+  </div>
+  <div class="field">
+    <%= f.label :pdescuento %><br />
+    <%= f.number_field :pdescuento %>
+  </div>
+  <div class="field">
+    <%= f.label :habilitado %><br />
+    <%= f.check_box :habilitado %>
+  </div>
+  <div class="field">
+    <%= f.label :tipo %><br />
+    <%= f.collection_select(:tipo_cliente_id,TipoCliente.all, :id, :nombre, {:prompt => 'Agregue un tipo'}) %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

@@ -1,0 +1,11 @@
+<tr><th class="ui-state-default ui-corner-all" width="350px">
+    <%= telefono.telefono %></th>
+    <%
+      @goto = redirigirTelefono @contelefono
+      #el internal es por si se llama de alguna sub ventana#
+     
+    %>
+    <th  class="ui-state-default ui-corner-all"><a href ="#" data="<%=@goto%>/telefonos/<%=  telefono.id %>/edit" dataw="400"  datah="200" class="edit_sub_link<%=  @internal %>" title="Editar Telefono"><span class="ui-icon ui-icon-wrench"></span></a></th>
+    <th  class="ui-state-default ui-corner-all"><a href="#" action="<%=@goto%>/telefonos/<%=  telefono.id %>" class="delete_sub_list<%=  @internal %>" data-method="delete" title="Eliminar Telefono"><span class="ui-icon ui-icon-trash"></span></a></th>
+
+</tr>

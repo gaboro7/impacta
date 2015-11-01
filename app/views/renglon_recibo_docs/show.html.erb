@@ -1,0 +1,35 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Recibo:</b>
+  <%= @renglon_recibo_doc.recibo %>
+</p>
+
+<p>
+  <b>Documento:</b>
+  <%= @renglon_recibo_doc.documento_id %>
+</p>
+
+<p>
+  <b>Documento type:</b>
+  <%= @renglon_recibo_doc.documento_type %>
+</p>
+
+<p>
+  <b>Total renglon:</b>
+  <%= @renglon_recibo_doc.total_renglon %>
+</p>
+
+<p>
+  <b>Total impuestos:</b>
+  <%= @renglon_recibo_doc.total_impuestos %>
+</p>
+
+<p>
+  <b>Detalle:</b>
+  <%= @renglon_recibo_doc.detalle %>
+</p>
+
+
+<%= link_to 'Edit', edit_renglon_recibo_doc_path(@renglon_recibo_doc) %> |
+<%= link_to 'Back', renglon_recibo_docs_path %>

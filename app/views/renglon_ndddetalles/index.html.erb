@@ -1,0 +1,29 @@
+<h1>Listing renglon_ndddetalles</h1>
+
+<table>
+  <tr>
+    <th>Detalle</th>
+    <th>Notadedebito</th>
+    <th>Total impuestos</th>
+    <th>Total renglon</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @renglon_ndddetalles.each do |renglon_ndddetalle| %>
+  <tr>
+    <td><%= renglon_ndddetalle.detalle %></td>
+    <td><%= renglon_ndddetalle.notadedebito %></td>
+    <td><%= renglon_ndddetalle.total_impuestos %></td>
+    <td><%= renglon_ndddetalle.total_renglon %></td>
+    <td><%= link_to 'Show', renglon_ndddetalle %></td>
+    <td><%= link_to 'Edit', edit_renglon_ndddetalle_path(renglon_ndddetalle) %></td>
+    <td><%= link_to 'Destroy', renglon_ndddetalle, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Renglon ndddetalle', new_renglon_ndddetalle_path %>

@@ -1,0 +1,52 @@
+<% if params[:tipo].nil?
+  @titulo_del_boton = "Agregar nueva Nota de Crédito";
+  @titulo_ventana = "Editar Nota de Crédito"
+  @titulo_eliminar = "Eliminar Nota de Crédito"
+  @parametro = ""
+  @parametrof = ""
+else
+  @titulo_del_boton = "Agregar nueva Nota de Devolucion";
+  @titulo_ventana = "Editar Nota de Devolucion"
+  @titulo_eliminar = "Eliminar Nota de Devolucion"
+  @parametro = "?tipo=devolucion"
+  @parametrof = "&tipo=devolucion"
+end %>
+
+<script type="text/javascript">
+  limpiar_paginado();
+</script>
+ <table>
+    <tr>
+      <th class ="ui-state-active" width ="120">N&uacute;mero</th>
+      <th class ="ui-state-active" width ="270">Cliente</th>
+      <th class ="ui-state-active" width ="120">Direcci&oacute;n</th>
+      <th class ="ui-state-active" width ="200">Estado</th>
+      <th class ="ui-state-active" width ="200">Total</th>
+      <% if params[:tipo].nil? %>
+         <th class ="ui-state-active" width ="150">Saldo</th>
+      <% end %>
+      <th class ="ui-state-active" width ="120">Moneda</th>
+      <th class ="ui-state-active" width ="200">Fecha</th>
+      <th class ="ui-state-active"></th>
+      <th class ="ui-state-active"></th>
+    </tr>
+
+    <% @notadecreditos.each do |notadecredito| %>
+      <tr>
+        <td  class="ui-state-default ui-corner-all"><%= !notadecredito.numero.nil? ? notadecredito.numero : " " %></td>
+        <td  class="ui-state-default ui-corner-all"> <%= notadecredito.comerciante.nombre %><% if notadecredito.sucursal %>[<%= notadecredito.sucursal.nombre %>]<% end %></td>
+        <td  class="ui-state-default ui-corner-all"><%= (notadecredito.comerciante)?notadecredito.direccion_cliente: notadecredito.comerciante_id %></td>
+        <td  class="ui-state-default ui-corner-all"><%= (notadecredito.impresa)?"Impresa":(notadecredito.anulada)?"Anulada":"S/Imprimir" %></td>
+        <td  class="ui-state-default ui-corner-all"><%=  "%.2f"  %(notadecredito.total_sinimpuestos + notadecredito.total_impuestos) %></td>
+        <% if params[:tipo].nil? %>
+            <td  class="ui-state-default ui-corner-all"><%=  notadecredito.adeudo.nil? ? " " : "%.2f"  %(notadecredito.adeudo) %></td>
+        <% end %>
+        <td  class="ui-state-default ui-corner-all"><%= (notadecredito.moneda)?notadecredito.moneda.nombre: notadecredito.moneda_id %></td>
+        <td  class="ui-state-default ui-corner-all"><%= notadecredito.fecha %></td>
+        <td  class="ui-state-default ui-corner-all"><a href ="#" data="/notadecreditos/<%=  notadecredito.id %>/edit<%=@parametro%>" dataw="600"  datah="1000px" class="list_link" title="<%=@titulo_ventana%>"><span class="ui-icon ui-icon-wrench"></span></a>
+        <td  class="ui-state-default ui-corner-all"><a href="#"  data-method="delete" title="<%=@titulo_eliminar%>"><span action="/notadecreditos/<%=  notadecredito.id %>" class="ui-icon ui-icon-trash <%= (notadecredito.anulada)?"ui-state-disabled":(notadecredito.impresa)?"ui-state-disabled":"delete_list" %>"></span></a></td>
+
+      </tr>
+    <% end %>
+  </table>
+<%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>

@@ -1,0 +1,623 @@
+<% @rand = (0...8).map{65.+(rand(25)).chr}.join %>
+<script>
+  var comerciante_id_recibo = <% if @recibo.id == nil  %>-1 <% else %><%= @recibo.comerciante.id %><%end%>;
+  var tipocambio = <%if (@recibo.id) %><%=  @recibo.moneda.tipodecambio  %><%else%>1<%end;%>;
+  var sucursal_id =  <% if @recibo.sucursal == nil  %>-1 <% else %><%= @recibo.sucursal.id %><%end%>;
+
+  var conf_ingf_key = 45; // tecla insert
+  var conf_imp_key = 119; // tecla F8 para imprimir
+
+  // visualizacion de listado de clientes
+  // 0: e-> <id>e.nombre : s-> <id>s.nombre[s.empresa.nombre]
+  // 1: e-> <id>e.nombre[e.direccion] : s-> <id>s.nombre[s.dirección]
+  var conf_view_cli = 1;
+
+  // Recargar despues de imprimir 0 cerrar despues de imprimir 1
+  var conf_recargar_o_cerrar_desp_imp = 1;
+
+  function recargardespuesdeimprimir(){
+     if (conf_recargar_o_cerrar_desp_imp == 0){
+         reloadIframe("/recibos/<%= @recibo.id %>/edit");
+         tab_selected.click();
+         $('#imprimir_recibo').dialog('close');
+     }else{
+         $('#imprimir_recibo').dialog('close');
+         tab_selected.click();
+         closeIframe("/recibos/<%= @recibo.id %>/edit");
+     }
+  }
+  $(function() {
+
+    var day = $( "#fecha" ).val();  
+    $( "#fecha" ).datepicker( $.datepicker.regional[ "es" ] );
+    $( "#fecha" ).datepicker( "option", "dateFormat","yy-mm-dd" );
+    $( "#fecha" ).val(day);
+    $( "#fecha" ).datepicker($.datepicker.regional[ "es" ] );
+ 
+/*
+    $( "#inicio<%= @rand %>" ).datepicker({
+      defaultDate: "+1w",
+      changeMonth: true,
+      numberOfMonths: 3,
+      onClose: function( selectedDate ) {
+        $( "#to" ).datepicker( "option", "minDate", selectedDate );
+      }
+    });
+    $( "#cierre<%= @rand %>" ).datepicker({
+      defaultDate: "+1w",
+      changeMonth: true,
+      numberOfMonths: 3,
+      onClose: function( selectedDate ) {
+        $( "#from" ).datepicker( "option", "maxDate", selectedDate );
+      }
+    });
+
+  */
+  $( "#inicio<%= @rand %>" ).datepicker({
+      changeMonth: true,
+      changeYear: true
+    });
+    $( "#inicio<%= @rand %>" ).datepicker( $.datepicker.regional[ "es" ] );
+    $( "#inicio<%= @rand %>" ).datepicker( "option", "dateFormat","yy-mm-dd" );
+    $( "#inicio<%= @rand %>" ).datepicker($.datepicker.regional[ "es" ] );
+  
+ $( "#cierre<%= @rand %>" ).datepicker({
+      changeMonth: true,
+      changeYear: true
+    });
+  $( "#cierre<%= @rand %>" ).datepicker( $.datepicker.regional[ "es" ] );
+  $( "#cierre<%= @rand %>" ).datepicker( "option", "dateFormat","yy-mm-dd" );
+  $( "#cierre<%= @rand %>" ).datepicker($.datepicker.regional[ "es" ] );
+  
+  <% if @recibo.id.nil? %>
+    $( "#recibo_manual" ).attr('checked',true);
+  <% end %>
+  $( "#recibo_con_suc" ).attr('checked',true);
+
+    $("#imprimir<%= @rand %>").button({
+      icons: {
+        primary: "ui-icon-print"
+      },
+      text: true
+    });
+
+    <%if (@recibo.id==nil)%>
+        $("#buscar_cliente<%= @rand %>").focus();
+    <%end%>
+
+    $("#recibo_rut").keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+     $( "#recibo_direccion_cliente" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+     $( "#recibo_detalle" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+
+
+  <% if (@recibo.id!=nil) %>
+
+      $("#anular<%= @rand %>").button();
+      $("#anular<%= @rand %>").click(function(){
+         $( "#anular<%= @rand %>" ).button( "disable" );
+         $('#anular_dialog<%= @rand %>').html("Esta seguro que desea anular este documento.");
+        $('#anular_dialog<%= @rand %>').dialog({
+        resizable: false,
+        height:160,
+        modal: true,
+        buttons: {
+          "Anular": function() {
+            $.ajax({
+              type: "GET",
+              url: "/recibos/anular.json?id=<% if (@recibo.id!=nil) %><%= @recibo.id %><%end%>",
+              context: document.body,
+              success: function(json_data){
+                $( "#anular<%= @rand %>" ).button( "enable" )
+                if (json_data.id){
+                  $("#texto_error").html("");
+                  reloadIframe("/recibos/<%=@recibo.id%>/edit",0);
+                  tab_selected.click();
+                }else{
+                  $( "#anular<%= @rand %>" ).button( "enable" )
+                  $("#texto_error").html("");
+                  for (var i in json_data){
+                    var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+                    $("#texto_error").html($("#texto_error").html()+error);
+
+                  }
+                }
+
+              },
+              error: function( xhr, status, index, anchor ) {
+                $( "#anular<%= @rand %>" ).button( "enable" )
+                $("#texto_error").html("");
+                for (var i in xhr){
+                  var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+xhr[i]+'.</p></div><br/>';
+                  $("#texto_error").html($("#texto_error").html()+error);
+
+                }
+               }
+            });
+
+           $( this ).dialog( "close" );
+           return false;
+          },
+          "Cancelar": function() {
+            $( "#anular<%= @rand %>" ).button( "enable" )
+            $( this ).dialog( "close" );
+
+          }
+        }
+      });
+      });
+
+      $("#imprimir<%= @rand %>").click(function(){
+
+        var serie = "";
+        var numero = 0;
+        $.ajax({
+          url: "/recibos/proximo_preimpreso.json?id=<% if (@recibo.id!=nil) %><%= @recibo.id %><%end%>",
+          context: document.body,
+          success: function(data){
+            numero = data.numero;
+            serie = data.serie;
+            $( "#dialog-confirm-imprimir<%= @rand %>" ).html("Serie:  <input type='text' id='serie<%= @rand %>' value='"+serie+"'></input><br/>N&uacute;mero  :<input type='text' id='numero<%= @rand %>' value='"+numero+"'></input>");
+            $( "#dialog-confirm-imprimir<%= @rand %>" ).dialog({
+              resizable: false,
+              height:140,
+              modal: true,
+              buttons: {
+                "Usar este numero": function() {
+                   imprimir_recibo();
+                },
+                "Cancelar": function() {
+                  $( this ).dialog( "close" );
+                }
+              },
+                open: function () {
+                     $("#numero<%= @rand %>").focus();
+                }
+            });
+
+          }
+        });
+
+      });
+
+      $( this ).keypress(function(e){
+          if(e.keyCode == conf_imp_key){
+            <%if (@recibo.id!=nil)%>
+              $("#imprimir<%= @rand %>").click();
+            <%end%>
+          }
+      });
+
+      $( "#dialog-confirm-imprimir<%= @rand %>" ).keydown(function (event) {
+        if (event.keyCode == 13) {
+            imprimir_recibo();
+        }
+      });
+
+    function imprimir_recibo(){
+      numero = $("#numero<%= @rand %>").val();
+      serie = $("#serie<%= @rand %>").val();
+      $( "#dialog-confirm-imprimir<%= @rand %>" ).dialog( "close" );
+
+      $.ajax({
+        url: "/recibos/generar_impresion/?id=<% if (@recibo.id!=nil) %><%= @recibo.id %><%end%>&serie="+serie+"&numero="+numero,
+        context: document.body,
+         success: function(data){
+               if(data.impresa != true){
+                 $.each(data, function(i, item) {
+                    alert(data[i]);
+                 });
+
+               }else{
+          $('#imprimir_recibo').dialog({
+            autoOpen: false,
+            width: 600,
+            modal: true,
+            height:400
+          });
+          $('#imprimir_recibo').html('');
+          $('#imprimir_recibo').html('<div id="altContent"><h1>recibo</h1><p><a href="http://www.adobe.com/go/getflashplayer">Get Adobe Flash player</a></p></div>');
+          $('#imprimir_recibo').dialog({ title: 'Imprimir Factura' });
+          $('#imprimir_recibo').dialog('open');
+          $('#imprimir_recibo').dialog({height: 120});
+          $('#imprimir_recibo').dialog({width: 200});
+
+          var flashvars = {
+            id:<% if (@recibo.id!=nil) %><%= @recibo.id %><%end%>,
+             tipo_factura:"RECIBO",
+            controler:'recibos'
+          };
+          var params = {
+            menu: "false",
+            scale: "noScale",
+            allowFullscreen: "true",
+            allowScriptAccess: "always",
+            bgcolor: "",
+            wmode: "direct" // can cause issues with FP settings & webcam
+          };
+          var attributes = {
+            id:"imprimir_recibo"
+          };
+
+          swfobject.embedSWF(
+          "swf/factura.swf",
+          "altContent", "100%", "100%", "10.0.0",
+          "swf/expressInstall.swf",
+          flashvars, params, attributes);
+          //  $('#imprimir_recibo').dialog('close');
+        }
+      }})
+    }
+
+  <% end  %>
+
+
+    //Spanish (Espa&ntilde;ol)
+    $( "#guardar<%= @rand %>" ).button();
+    $( "#guardar<%= @rand %>" ).click(function() {
+      $( "#guardar<%= @rand %>" ).button( "disable" )
+      var data = new Object();
+      <% if(@recibo.id !=nil) %>
+        data["_method"] =	"put";
+      <% end; %>
+      data['cliente_id'] =	comerciante_id_recibo;
+      data['recibo[fecha]'] =	$( "#fecha" ).val();
+      data['recibo[pagocontado_id]'] =	$( "#rec_pago_contado" ).val();
+      data['recibo[moneda_id]'] = $( "#rec_cont_moneda_id" ).val();
+      data['recibo[rut]'] =	$( "#recibo_rut" ).val();
+      data['recibo[direccion_cliente]'] =	$( "#recibo_direccion_cliente" ).val();
+      data['recibo[detalle]'] =	$( "#recibo_detalle" ).val();
+      data['recibo[desde]'] =	$( "#inicio<%= @rand %>" ).val();
+      data['recibo[hasta]'] =	$( "#cierre<%= @rand %>" ).val();
+      data['recibo[manual]'] =  $( "#recibo_manual" ).is(':checked');
+      data['recibo[con_suc]'] =  $( "#recibo_con_suc" ).is(':checked');
+      if (sucursal_id != -1)
+        data['recibo[sucursal_id]'] = sucursal_id;
+
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/recibos<% if (@recibo.id==nil) %>.json/ <% else %>/<%= @recibo.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar<%= @rand %>" ).button( "enable" )
+          if (json_data.id){
+            $("#texto_error").html("");
+            tab_selected.click();
+           
+            <% if (@recibo.id==nil) %>
+              showIframe("/recibos/"+json_data.id+"/edit","Editar Recibo");
+              closeIframe( "/recibos/<% if (@recibo.id==nil) %>new<% else %><%= @recibo.id %>/edit<%end%>");
+           <%else%>
+              reloadIframe("/recibos/<%= @recibo.id %>/edit");
+            <%end%>
+          }else{
+            $("#texto_error").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error").html($("#texto_error").html()+error);
+
+            }
+          }
+
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar<%= @rand %>" ).button( "enable" )
+          $("#texto_error").html("");
+          var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>Error:</strong> Error interno.</p></div><br/>';
+          $("#texto_error").html($("#texto_error").html()+error);
+
+          
+        }
+      });
+      return false;
+    });
+
+   
+
+  });
+
+  <%if (@recibo.id==nil)%>
+    iFrames["/recibos/new"].keypress(function(e){
+        if(e.keyCode == conf_ingf_key){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+  <%else%>
+    iFrames["/recibos/<%= @recibo.id %>/edit"].keypress(function(e){
+        if(e.keyCode == conf_ingf_key){
+            $("#guardar<%= @rand %>").click();
+        }
+     });
+  <%end%>
+
+  $( "#buscar_cliente<%= @rand %>" ).autocomplete({
+    source: function( request, response ) {
+
+      $.ajax({
+        url: "empresas.json?filtro="+request.term+"&contado=0",
+        success: function( data ) {
+
+          if(data.empresas.length == 0 && data.sucursales.length == 0 &&  data.personas.length == 0){
+            data = [{
+                id :-1
+              }];
+          }else{
+            var aux = new Array();
+            data = aux.concat(data.empresas,data.sucursales,data.personas);
+
+          }
+          response( $.map( data, function( item ) {
+
+            if (item.id == -1){
+              return {
+                label: "no se encotraron resultados" ,
+                value: request.term,
+                id :item.id
+              }
+            }else{
+                if (item.empresa){
+
+                  if (conf_view_cli == 0){
+                      return {
+                        label: "<" + item.id + ">" + item.nombre + " ["+ item.empresa.nombre+"]" ,
+                        value: "<" + item.id + ">" + item.nombre + " ["+ item.empresa.nombre+"]",
+                        id: item.empresa.id,
+                        sucursal_id : item.id,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                        rut : item.empresa.nif
+
+                      }
+                  }else{
+                      return {
+                        label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                        value: item.nombre,
+                        id: item.empresa.id,
+                        sucursal_id : item.id,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                        rut : item.empresa.nif
+
+                      }
+                  }
+                }else{
+                    if (conf_view_cli == 0){
+                      return {
+                        label: "<" + item.id + ">" + item.nombre ,
+                        value: "<" + item.id + ">" + item.nombre,
+                        id :item.id,
+                        sucursal_id : -1,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre,
+                        rut : item.nif
+
+                      }
+                    }else{
+
+                       return {
+                        label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]", //Casa central",
+                        value: item.nombre,
+                        id :item.id,
+                        sucursal_id : -1,
+                        domicilio : item.domicilio,
+                        nombre :item.nombre,
+                        rut : item.nif
+
+                      }
+
+                    }
+                }
+              }
+          })
+        );
+        },
+        error: function( xhr, status, index, anchor ) {
+          return {
+            label: 'no se econtro reultado' ,
+            value: request.term,
+            id :-1
+          }
+        }
+      });
+    },
+    minLength: 1,
+    select: function( event, ui ) {
+      if(ui.item.id != -1){
+        // showIframe("/empresas/"+ui.item.id+"/edit","Editar Empresa",960,600);
+        sucursal_id =  ui.item.sucursal_id;
+        $( "#recibo_rut" ).val( ui.item.rut);
+        $( "#recibo_direccion_cliente" ).val(ui.item.domicilio);
+        comerciante_id_recibo = ui.item.id;
+        setTimeout(
+                  function(){
+                      $( "#recibo_detalle" ).focus();
+                  },100);
+      }
+    },
+    open: function() {
+      $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+    },
+    close: function() {
+      $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+    }
+  });
+  $("#mostrar_cliente<%= @rand %>").button({
+    icons: {
+      primary: "ui-icon-circle-triangle-e"
+    },
+    text: false
+  });
+  $("#mostrar_cliente<%= @rand %>").click(function(){
+<%if @recibo.id %>
+      showIframe("/<%=@recibo.comerciante.class.name.downcase%>s/<%= @recibo.comerciante.id %>>/edit");
+<%end%>
+  });
+
+  $( "#rec_pago_contado" ).change(function(){
+
+      if($( "#rec_pago_contado" ).val() != ""){
+        $.ajax({
+          type: "GET",
+          url: "/pagocontados/"+$( "#rec_pago_contado" ).val()+".json",
+          context: document.body,
+          success: function(json_data){
+            $( "#rec_cont_moneda_id" ).html("");
+            //$( "#moneda_id" ).append(
+            //('<option value="-1">seleccione una moneda</option>'));
+            for (var i in json_data.moneda){
+                $( "#rec_cont_moneda_id" ).append(
+                $('<option value="'+json_data.moneda[i].id+'">'+json_data.moneda[i].nombre+'</option>')
+                );
+
+           }
+          }
+        });
+        }
+  });
+
+</script>
+
+
+
+<%= form_for(@recibo) do |f| %>
+  <% if @recibo.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@recibo.errors.count, "error") %> prohibited this recibo from being saved:</h2>
+
+      <ul>
+        <% @recibo.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div id="texto_error"> </div>
+
+  <div class="field">
+    <%= f.label :fecha %><br />
+    <%if (@recibo.id!=nil) %>
+        <div class ="combobox"> <%= f.text_field :fecha , :size =>20, :class =>  'text ui-widget-content ui-corner-all' ,:id => "fecha"%></div>
+    <%else%>
+        <div class ="combobox"> <%= f.text_field :fecha ,:value => Time.now.strftime("%Y-%m-%d") , :size =>20, :class =>  'text ui-widget-content ui-corner-all' ,:id => "fecha"%></div>
+    <%end%>
+  </div>
+
+  <%if (@recibo.id==nil) %>
+  <div  style="position: relative;"><label for="filtro_cliente">Buscar Cliente </label>
+    <div class ="combobox"> <input id="buscar_cliente<%= @rand %>" style="width: 16em;" /></div>
+  </div>
+  <% end %>
+
+   <% if(@recibo.id!=nil) %>
+    <div class="field">
+      <label for="recibo_numero">N&uacute;mero</label>
+      <div class ="combobox"> <%= f.label @recibo.numero.nil? ? " " : @recibo.numero %></div>
+    </div>
+        <br>
+  <% end %>
+
+  <%if @recibo.id%>
+    <div class="field" id="clienteCredito">
+      <%= f.label :cliente %><div class ="combobox"><label><%=  @recibo.comerciante.nombre  %></label><% if @recibo.sucursal_id %> <br/>[<label><%= @recibo.sucursal.nombre%></label>]<% end %><a id="mostrar_cliente<%= @rand  %>" >Ver Cliente</a></div>
+    </div>
+  <%end%>
+
+  <div class="field" >
+    <%= f.label :forma_de_pago %><br />
+     <%  @contado_query = "1=1"
+        if  !Pagocontado.where("predeterminada = 1")[0].nil?
+          @contado_query = " predeterminada = 1"
+        end
+     %>
+    <div class ="combobox"> <%= f.collection_select(:pagocontado_id, Pagocontado.all, :id, :nombre, { :selected => Pagocontado.where(@contado_query)[0].id}, :class =>  'text ui-widget-content ui-corner-all', :id => 'rec_pago_contado') %></div>
+  </div>
+
+  <div class="field" >
+    <label for="recibo_moneda">Moneda</label>
+    <div class ="combobox"> <%= f.collection_select(:moneda_id,Pagocontado.where(@contado_query)[0].moneda, :id  , :nombre, {:prompt => false}, :id => 'rec_cont_moneda_id', :class =>  'text ui-widget-content ui-corner-all') %></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :rut %>
+    <div class ="combobox">  <%= f.text_field :rut , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+  </div>
+
+  <div class="field">
+    <label for="recibo_direccion_cliente">Direcci&oacute;n cliente</label>
+    <div class ="combobox">  <%= f.text_field :direccion_cliente , :size =>20, :class =>  'text ui-widget-content ui-corner-all'%></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :comentario %>
+    <div class ="combobox"> <%= f.text_field :detalle, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+  </div>
+
+   <div class="field">
+    <%= f.label :manual %>
+    <div class ="combobox">  <%= f.check_box :manual,{ :size =>20, :class =>  'text ui-widget-content ui-corner-all'}, false %></div>
+
+   </div>
+    <%if (@recibo.id.nil?) %>
+        <div class="field">
+        <%= f.label :sucursales %>
+        <div class ="combobox" >  <%= f.check_box :con_suc,{ :size =>20, :class =>  'text ui-widget-content ui-corner-all'}, false %></div>
+
+      </div>
+      <% end %>
+
+  <%  if (@recibo.id.nil?) %>
+   <div class="field">
+    <%= f.label "Fecha de Inicio" %>
+    <div class ="combobox"><input type="text" id="inicio<%= @rand %>" name="inicio<%= @rand %>" class="text ui-widget-content ui-corner-all" size="10" /> </div>
+  </div>
+   <div class="field">
+    <%= f.label "Fecha de Cierre" %>
+    <div class ="combobox"> <input type="text" id="cierre<%= @rand %>" name="cierre<%= @rand %>" class="text ui-widget-content ui-corner-all" size="10" /></div>
+  </div>
+
+  <% end %>
+
+  <div class="actions" >
+    <%if (@recibo.id==nil) %>
+       <a id="guardar<%= @rand %>"><%if (@recibo.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+    <%else%>
+      <%if (!@recibo.impresa) %>
+        <a id="guardar<%= @rand %>"><%if (@recibo.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+      <%end%>
+    <%end%>
+   
+    <%if (@recibo.id!=nil) %>
+      <%if (@recibo.impresa) %>
+            <%if (!@recibo.anulada) %>
+                <span id ="imprimir<%= @rand %>"> <%if (@recibo.impresa) %>Re Imprimir<%else%>Imprimir Recibo<%end%></span>
+                <span id ="anular<%= @rand %>">Anular</span>
+            <%else%>
+                <span id="anulada<%= @rand %>" style="color: red;">Anulado </span>
+            <%end%>
+      <% elsif  (!@recibo.anulada) %>
+            <span id ="imprimir<%= @rand %>"> <%if (@recibo.impresa) %>Re Imprimir<%else%>Imprimir Recibo<%end%></span>
+      <%end%>
+
+    <% end %>
+  </div>
+
+  <div id="imprimir_recibo"></div>
+
+  <div id="dialog-confirm-imprimir<%= @rand %>"></div>
+<div id="anular_dialog<%= @rand %>" title="Anular"></div>
+
+<% end %>

@@ -1,0 +1,13 @@
+<tr>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_ndc_articulo.cantidad %></th>
+  <th class="ui-state-default ui-corner-all" width="350px">  <%= renglon_ndc_articulo.comercializable.nombreart %></th>
+  <th class="ui-state-default ui-corner-all" width="350px">  <%= renglon_ndc_articulo.comentario %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_ndc_articulo.precio_unitario %></th>
+  <th class="ui-state-default ui-corner-all" width="350px">  <%= renglon_ndc_articulo.descuento %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_ndc_articulo.total_impuestos %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= ((renglon_ndc_articulo.precio_unitario * renglon_ndc_articulo.cantidad)*100).round/100.0 %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= ((renglon_ndc_articulo.total_renglon + renglon_ndc_articulo.total_impuestos)*100).round/100.0%></th>
+  <th  class="ui-state-default ui-corner-all"><a href ="#" data="/notadecreditos/<%=renglon_ndc_articulo.notadecredito.id%>/renglon_ndc_articulos/<%=  renglon_ndc_articulo.id %>/edit" dataw="600"  datah="600" class="edit_sub_link" title="Editar Linea"><span class="ui-icon ui-icon-wrench"></span></a></th>
+  <th  class="ui-state-default ui-corner-all"><a href="#" action="/notadecreditos/<%=renglon_ndc_articulo.notadecredito.id%>/renglon_ndc_articulos/<%=  renglon_ndc_articulo.id %>" class="delete_sub_list" data-method="delete" title="Eliminar Linea"><span class="ui-icon ui-icon-trash"></span></a></th>
+
+</tr>

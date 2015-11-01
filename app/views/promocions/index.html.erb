@@ -1,0 +1,92 @@
+<% if params[:numero_hoja].nil? %>
+<script type="text/javascript">
+  $( "#filtro_promocion" ).autocomplete({
+    source: function( request, response ) {
+      $.ajax({
+        url: "promocions.json?filtro="+request.term,
+        success: function( data ) {
+          data = data
+          if(data.length == 0){
+            data = [{
+                id :-1
+              }];
+          }
+          response( $.map( data, function( item ) {
+            if (item.id == -1){
+              return {
+                label: "no se encotraron resultados" ,
+                value: request.term,
+                id :item.id
+              }
+            }else{
+              return {
+                label: item.descripcion ,
+                value: item.descripcion,
+                id :item.id
+              }
+            }
+          })
+        ); 
+        },
+        error: function( xhr, status, index, anchor ) {
+          return {
+            label: 'no se econtro reultado' ,
+            value: request.term,
+            id :-1
+          }
+        }
+      });
+    },
+    minLength: 1,
+    select: function( event, ui ) {
+      if(ui.item.id != -1)
+        showIframe("/promocions/"+ui.item.id+"/edit","Editar Promocion",960,600);
+    },
+    open: function() {
+      $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+    },
+    close: function() {
+      $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+    }
+  });
+</script>
+<br />
+  <a class="nuevo" href ="#" data="/promocions/new" dataw="460"  datah="500px" title="Agregar nueva Promocion">Agregar nueva Promoci&oacute;n</a>
+
+  <br /><br />
+  <div id="buscar_promocion" style="position: absolute;left: 290px;top:77px;"><label for="filtro_promocion">Buscar Promocion: </label>
+  <input id="filtro_promocion" class="filtro" />
+</div>
+  <div id="listado">
+  <%  else %>
+    <script type="text/javascript">
+      limpiar_paginado();
+    </script>
+  <% end %>
+  <table>
+    <tr>
+      <th class ="ui-state-active" width ="200">Descripci&oacute;n</th>
+      <th class ="ui-state-active" width ="200">Inicio</th>
+      <th class ="ui-state-active" width ="200">Cierre</th>
+      <th class ="ui-state-active" width ="200">Descuento</th>
+      <th class ="ui-state-active"></th>
+      <th class ="ui-state-active"></th>
+
+    </tr>
+
+    <% @promocions.each do |promocion| %>
+      <tr>
+        <td class="ui-state-default ui-corner-all"><%= promocion.descripcion %></td>
+        <td class="ui-state-default ui-corner-all"><%= promocion.fechainicio %></td>
+        <td class="ui-state-default ui-corner-all"><%= promocion.fechafin %></td>
+        <td class="ui-state-default ui-corner-all"><%= promocion.descuento %></td>
+
+        <td  class="ui-state-default ui-corner-all"><a href ="#" data="<%=edit_promocion_path(promocion) %>" dataw="460"  datah="800px" class="list_link" title="Editar Promocion"><span class="ui-icon ui-icon-wrench"></span></a></td>
+        <td  class="ui-state-default ui-corner-all"><a href="#" action="/promocions/<%=  promocion.id %>" class="delete_list" data-method="delete" title="Eliminar Promocion"><span class="ui-icon ui-icon-trash"></span></a></td>
+      </tr>
+    <% end %>
+  </table>
+  <%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>
+  <% if params[:numero_hoja].nil? %>
+  </div>
+<% end %>

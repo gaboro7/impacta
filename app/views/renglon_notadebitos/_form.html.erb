@@ -1,0 +1,277 @@
+<% @rand =  (0...8).map{65.+(rand(25)).chr}.join  %>
+<script>
+  var productos = [];
+  var nueva_moneda = 1;
+
+<% comercializables = Comercializable.get_comercializable_cliente(@notadedebito.comerciante.listaprecio.id)  %>
+<% comercializables.each{ |item| %>
+    productos[<%= item.id %>] = "<%= item.nombreart %>";
+<% } %>
+
+  var reng_fact_id = -1;
+
+  $(function() {
+
+    var dates  = $( "#from<%= @rand %>, #to<%= @rand %>" ).datepicker({
+      changeMonth: true,
+      changeYear: true,
+      onSelect: function( selectedDate ) {
+        var option = this.id == "from<%= @rand %>" ? "minDate" : "maxDate",
+        instance = $( this ).data( "datepicker" ),
+        date = $.datepicker.parseDate(
+        instance.settings.dateFormat ||
+          $.datepicker._defaults.dateFormat,
+        selectedDate, instance.settings );
+        dates.not( this ).datepicker("option", option, date );
+      }
+    });
+    var renglones;
+    var data_renglones;
+    function cargarDatosCantidad(data){
+      data_renglones = data;
+      nueva_moneda = data.moneda.tipodecambio;
+      $( "#renglon_notadebito_comercializable_id<%= @rand %>" ).html("");
+      $( "#renglon_notadebito_comercializable_id<%= @rand %>" ).append(
+      $('<option value="-1">seleccione un articulo</option>'));
+      renglones = [];
+      for (var i in data.renglon_facturas){
+        renglones[data.renglon_facturas[i].comercializable_id] = data.renglon_facturas[i];
+        $( "#renglon_notadebito_comercializable_id<%= @rand %>" ).append(
+        $('<option value="'+data.renglon_facturas[i].comercializable_id+'">'+productos[data.renglon_facturas[i].comercializable_id]+'</option>')
+      );
+      }
+    }
+
+    $( "#renglon_notadebito_comercializable_id<%= @rand %>" ).change(function(){
+      reng_fact_id = $(this).val();
+      $( "#renglon_notadebito_cantidad<%= @rand %>" ).val( renglones[$(this).val()].cantidad);
+      $( "#renglon_notadebito_precio_unitario<%= @rand %>" ).val(reondeo(renglones[$(this).val()].precio_unitario*nueva_moneda/tipocambio));
+      $( "#renglon_notadebito_total_impuestos<%= @rand %>" ).val( reondeo((renglones[reng_fact_id].total_impuestos * ($( "#renglon_notadebito_cantidad<%= @rand %>" ).val()) * (1/renglones[$(this).val()].cantidad)) * (nueva_moneda/tipocambio)));
+      $( "#renglon_notadebito_total_renglon<%= @rand %>" ).val(reondeo(renglones[$(this).val()].total_renglon*nueva_moneda/tipocambio));
+      $( "#renglon_notadebito_total_renglon<%= @rand %>" ).val( reondeo(($( "#renglon_notadebito_cantidad<%= @rand %>" ).val()*(renglones[$(this).val()].precio_unitario))*nueva_moneda/tipocambio));
+
+    });
+
+    $("#renglon_notadebito_factura_id<%= @rand %>").keyup(function(){
+
+      if ($("#renglon_notadebito_factura_id<%= @rand %>").val() == ""){
+        $("#renglon_notadebito_factura_id<%= @rand %>").autocomplete( "search", "no search" );
+
+      }
+
+    });
+
+
+    $( "#renglon_notadebito_factura_id<%= @rand %>" ).autocomplete({
+      source: function( request, response ) {
+        var search = request.term;
+        if(request.term == "no search")
+          search = "";
+        var url = "facturas/filtered.json?factura_id="+search+"&cliente="+cliente_id +(($( "#from<%= @rand %>").val() == "")?"":"&desde="+$( "#from<%= @rand %>").val())+(( $( "#to<%= @rand %>").val() == "")?"":"&hasta="+$( "#to<%= @rand %>").val());
+        $.ajax({
+          url: url,
+          success: function( data ) {
+
+            if(data.length == 0){
+              data = [{
+                  id :-1,
+                  texto: "no se encontraron resultados"
+                }];
+            }
+            response( $.map( data, function( item ) {
+              if (item.id == -1){
+                return {
+                  label: "no se encotraron resultados" ,
+                  value: request.term,
+                  id :item.id
+                }
+              }else{
+                return {
+                  label: item.id[0] ,
+                  value: item.id[0],
+                  id :item.id[0],
+                  complete_data : item
+                }
+              }
+            })
+          );
+          },
+          error: function( xhr, status, index, anchor ) {
+            return {
+              label: 'no se econtro reultado' ,
+              value: request.term,
+              id :-1
+            }
+          }
+        });
+      },
+      minLength: 1,
+      select: function( event, ui ) {
+
+        if(ui.item.id != -1){
+          cargarDatosCantidad(ui.item.complete_data)
+        }
+      },
+      open: function() {
+        $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+      },
+      close: function() {
+        $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+      }
+    });
+
+    function escribir_error(tipo_error,texto){
+      var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+tipo_error+':</strong>'+texto+'</p></div><br/>';
+      $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+
+    }
+
+
+    $( "#guardar_renglon<%= @rand %>" ).button();
+    $( "#guardar_renglon<%= @rand %>" ).click(function() {
+      $( "#guardar_renglon<%= @rand %>" ).button( "disable" );
+      var data = new Object();
+<% if(@renglon_notadebito != nil) %>
+        data["_method"] =	"put";
+
+<% end; %>
+      data['renglon_notadebito[factura_id]'] =	$( "#renglon_notadebito_factura_id<%= @rand %>" ).val();
+      data['renglon_notadebito[cantidad]'] =	$( "#renglon_notadebito_cantidad<%= @rand %>" ).val();
+      data['renglon_notadebito[comercializable_id]'] =	$( "#renglon_notadebito_comercializable_id<%= @rand %>" ).val();
+      data['renglon_notadebito[precio_unitario]'] =	$( "#renglon_notadebito_precio_unitario<%= @rand %>" ).val();
+      data['renglon_notadebito[total_impuestos]'] =	$( "#renglon_notadebito_total_impuestos<%= @rand %>" ).val();
+      data['renglon_notadebito[total_renglon]'] =	$( "#renglon_notadebito_total_renglon<%= @rand %>" ).val();
+      data['renglon_notadebito[comentario]'] =	$( "#renglon_notadebito_comentario<%= @rand %>" ).val();
+
+
+
+      data['commit'] = "Create notadedebito"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/notadedebitos/<%= @notadedebito.id %>/renglon_notadebitos<% if (@renglon_notadebito==nil) %>.json/ <% else %>/<%= @renglon_notadebito.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar_renglon<%= @rand %>" ).button( "enable" )
+          if (json_data.id){
+            $("#texto_error<%= @rand %>").html("");
+            tab_selected.click();
+<% if (@renglon_notadebito != nil) %>
+              closeIframe("/notadedebitos/<%= @notadedebito.id %>/renglon_notadebitos/<%= @renglon_notadebito.id %>/edit");
+<% end %>
+
+
+            reloadIframe("/notadedebitos/<%=@notadedebito.id%>/edit","Editar Renglon",900,600)
+          }else{
+            $("#texto_error_inner<%= @rand %>").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+
+            }
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar_renglon<%= @rand %>" ).button( "enable" )
+          $("#texto_error_inner<%= @rand %>").html("");
+          var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>0:</strong> Error interno.</p></div><br/>';
+          $("#texto_error_inner<%= @rand %>").html($("#texto_error_inner<%= @rand %>").html()+error);
+
+
+        }
+      });
+      return false;
+    });
+
+    $( "#renglon_notadebito_cantidad<%= @rand %>" ).keyup(function(){
+      $( "#renglon_notadebito_total_impuestos<%= @rand %>" ).val( reondeo(renglones[reng_fact_id].total_impuestos*nueva_moneda/tipocambio));
+    //  $( "#renglon_notadebito_total_impuestos<%= @rand %>" ).val(7); //reondeo((renglones[reng_fact_id].total_impuestos * ($( "#renglon_notadebito_cantidad<%= @rand %>" ).val()) * (1/renglones[reng_fact_id].cantidad)) * (nueva_moneda/tipocambio)));
+      $( "#renglon_notadebito_total_impuestos<%= @rand %>" ).val( reondeo((renglones[reng_fact_id].total_impuestos * ($( "#renglon_notadebito_cantidad<%= @rand %>" ).val()) * (1/renglones[reng_fact_id].cantidad)) * (nueva_moneda/tipocambio)));
+      $( "#renglon_notadebito_total_renglon<%= @rand %>" ).val( reondeo(($( "#renglon_notadebito_cantidad<%= @rand %>" ).val()*(renglones[reng_fact_id].precio_unitario))*nueva_moneda/tipocambio));
+
+    });
+
+  });
+</script>
+<% if  (@renglon_notadebito==nil) %>
+  <% @renglon_notadebito = RenglonNotadebito.new %>
+<% end %>
+
+<%= form_for([@notadedebito,@renglon_notadebito]) do |f| %>
+  <% if @notadedebito.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@notadedebito.errors.count, "error") %> prohibited this renglon_factura from being saved:</h2>
+
+      <ul>
+        <% @notadedebito.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div id="texto_error_inner<%= @rand %>"> </div>
+  <div class="field">
+
+    <%= f.label :factura %>
+    <div class ="combobox">
+      <label for="from<%= @rand %>">Ini:</label>
+      <input type="text" id="from<%= @rand %>" name="from<%= @rand %>" style="width: 80px !important;"/>
+      <label for="to<%= @rand %>">Fin:</label>
+      <input type="text" id="to<%= @rand %>" name="to<%= @rand %>" style="width: 80px !important;" />
+      <%= f.text_field :factura_id , :size =>20, :class =>  'filtro' ,:id => "renglon_notadebito_factura_id" + @rand.to_s  ,:style=>"width: 18em !important;"%>
+
+    </div>
+
+  </div>
+  <!--
+    <div class="field">
+  <%= f.label :factura %>
+      <div class ="combobox">  <%= f.text_field :factura , :size =>20, :class =>  'text ui-widget-content ui-corner-all' ,:id => "renglon_notadebito_factura_id" + @rand.to_s %></div>
+    </div>
+  -->
+  <div class="field">
+    <%= f.label :Articulos %>
+    <% if @notadedebito.comerciante.listaprecio!=nil %><!--(:include => :rola)-->
+      <div class ="combobox">  <%= f.collection_select(:comercializable_id, Comercializable.get_comercializable_cliente(@notadedebito.comerciante.listaprecio.id) , :id,:nombreart , {:prompt => 'Agregar un Articulo'}, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_notadebito_comercializable_id" + @rand.to_s ) %></div>
+      <span id="descuento_aplicado<%= @rand %>" style="color: red;">Descuento</span>
+    <%else%>
+      <span id="descuento_aplicado<%= @rand %>" style="color: red;">El cliente no tiene productos asociados. Ir a lista de precios </span>
+    <%end%>
+  </div>
+
+  <div class="field">
+    <%= f.label :cantidad %>
+    <div class ="combobox">  <%= f.text_field :cantidad , :size =>20, :class =>  'text ui-widget-content ui-corner-all' ,:id => "renglon_notadebito_cantidad" + @rand.to_s %></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :detalle %>
+    <div class ="combobox"> <%= f.text_field :comentario , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_notadebito_comentario" + @rand.to_s%></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :precio_unitario %>
+    <div class ="combobox"> <%= f.text_field :precio_unitario , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_notadebito_precio_unitario" + @rand.to_s,:readonly=>"readonly" %></div>
+  </div>
+
+  <div class="field">
+    <%= f.label :total_impuestos %>
+    <div class ="combobox">  <%= f.text_field :total_impuestos , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_notadebito_total_impuestos" + @rand.to_s ,:readonly=>"readonly"%></div>
+    <span id="impuesto_aplicado<%= @rand %>" style="color: red;">Impuestos</span>
+  </div>
+
+  <div class="field">
+    <%= f.label :total_renglon %>
+    <div class ="combobox">  <%= f.text_field :total_renglon , :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_notadebito_total_renglon" + @rand.to_s ,:readonly=>"readonly"%></div>
+  </div>
+
+  <div class="actions" >
+    <a id="guardar_renglon<%= @rand %>"><%if (@renglon_notadebito != nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+
+<% end %>
+
+
+
+

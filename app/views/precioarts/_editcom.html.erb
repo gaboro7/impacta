@@ -1,0 +1,26 @@
+<%= form_for([@lp,@precioart]) do |f| %>
+  <% if @lp.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@lp.errors.count, "error") %> prohibited this precioart from being saved:</h2>
+
+      <ul>
+      <% @lp.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :precio %>
+    <%= f.text_field :precio %>
+    <%= f.label :descuento %>
+    <%= f.text_field :descuento %>
+
+  </div>
+  
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>
+

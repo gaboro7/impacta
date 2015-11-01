@@ -1,0 +1,35 @@
+<h1>Listing renglon_ndd_articulos</h1>
+
+<table>
+  <tr>
+    <th>Comercializable</th>
+    <th>Cantidad</th>
+    <th>Precio</th>
+    <th>Total renglon</th>
+    <th>Total impuestos</th>
+    <th>Descuento</th>
+    <th>Comentario</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @renglon_ndd_articulos.each do |renglon_ndd_articulo| %>
+  <tr>
+    <td><%= renglon_ndd_articulo.comercializable %></td>
+    <td><%= renglon_ndd_articulo.cantidad %></td>
+    <td><%= renglon_ndd_articulo.precio %></td>
+    <td><%= renglon_ndd_articulo.total_renglon %></td>
+    <td><%= renglon_ndd_articulo.total_impuestos %></td>
+    <td><%= renglon_ndd_articulo.descuento %></td>
+    <td><%= renglon_ndd_articulo.comentario %></td>
+    <td><%= link_to 'Show', renglon_ndd_articulo %></td>
+    <td><%= link_to 'Edit', edit_renglon_ndd_articulo_path(renglon_ndd_articulo) %></td>
+    <td><%= link_to 'Destroy', renglon_ndd_articulo, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Renglon ndd articulo', new_renglon_ndd_articulo_path %>

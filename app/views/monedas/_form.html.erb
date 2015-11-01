@@ -1,0 +1,82 @@
+<script>
+  $(function() {
+    //Spanish (Espa&ntilde;ol)
+    $( "#guardar" ).button();
+    $( "#guardar" ).click(function() {
+      $(this).button( "disable" )
+      var data = new Object();
+<% if(@moneda.id!=nil) %>
+        data["_method"] =	"put";
+<% end; %>
+      data['moneda[tipodecambio]'] =	$( "#moneda_tipodecambio" ).val();
+      data['moneda[predeterminada]'] =	$( "#moneda_predeterminada:checked" ).length;
+      data['moneda[nombre]'] =	$( "#moneda_nombre" ).val();
+
+      data['commit'] = "Create Moneda"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/monedas<% if (@moneda.id==nil) %>.json/ <% else %>/<%= @moneda.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar" ).button( "enable" )
+          if (json_data.id){
+            $("#texto_error").html("");
+            tab_selected.click();
+           // $("#dialog").dialog( "close" );
+           closeIframe("/monedas<% if (@moneda.id==nil) %>/new<% else %>/<%= @moneda.id %>/edit<%end%>");
+          }else{
+            $("#texto_error").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error").html($("#texto_error").html()+error);
+
+            }
+          }
+
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar" ).button( "enable" )
+          $("#texto_error").html("");
+          for (var i in xhr){
+            var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+xhr[i]+'.</p></div><br/>';
+            $("#texto_error").html($("#texto_error").html()+error);
+
+          }
+        }
+      });
+      return false;
+    });
+  });
+</script>
+<%= form_for(@moneda) do |f| %>
+  <% if @moneda.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@moneda.errors.count, "error") %> prohibited this moneda from being saved:</h2>
+
+      <ul>
+        <% @moneda.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+<div id="texto_error"> </div>
+  <div class="field">
+    <%= f.label :nombre %><br />
+    <div class ="combobox"><%= f.text_field :nombre, :size =>20, :class =>  'text ui-widget-content ui-corner-all'  %></div>
+  </div>
+  <div class="field">
+    <%= f.label :tipodecambio %><br />
+    <div class ="combobox"> <%= f.text_field :tipodecambio, :size =>20, :class =>  'text ui-widget-content ui-corner-all'  %></div>
+  </div>
+  <div class="field">
+    <%= f.label :predeterminada %>
+    <div class ="combobox"><%= f.check_box :predeterminada %></div>
+  </div>
+  
+  <div class="actions" >
+    <a id="guardar"><%if (@moneda.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+<% end %>

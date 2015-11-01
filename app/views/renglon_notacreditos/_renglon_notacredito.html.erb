@@ -1,0 +1,17 @@
+
+
+
+<tr>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_notacredito.factura.numero%></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_notacredito.cantidad %></th>
+  <th class="ui-state-default ui-corner-all" width="350px">  <%= renglon_notacredito.comercializable.nombreart %></th>
+  <th class="ui-state-default ui-corner-all" width="350px">  <%= renglon_notacredito.comentario %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_notacredito.precio_unitario %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_notacredito.descuento %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= renglon_notacredito.total_impuestos %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= ((renglon_notacredito.precio_unitario * renglon_notacredito.cantidad)*100).round/100.0 %></th>
+  <th class="ui-state-default ui-corner-all" width="50px">  <%= ((renglon_notacredito.total_impuestos + renglon_notacredito.total_renglon)*100).round/100.0 %></th>
+  <th  class="ui-state-default ui-corner-all"><a href ="#" data="/notadecreditos/<%=renglon_notacredito.notadecredito.id%>/renglon_notacreditos/<%=  renglon_notacredito.id %>/edit" dataw="600"  datah="600" class="edit_sub_link" title="Editar Linea"><span class="ui-icon ui-icon-wrench"></span></a></th>
+  <th  class="ui-state-default ui-corner-all"><a href="#" action="/notadecreditos/<%=renglon_notacredito.notadecredito.id%>/renglon_notacreditos/<%=  renglon_notacredito.id %>" class="delete_sub_list" data-method="delete" title="Eliminar Linea"><span class="ui-icon ui-icon-trash"></span></a></th>
+
+</tr>

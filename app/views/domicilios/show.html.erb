@@ -1,0 +1,10 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Domicilio:</b>
+  <%= @domicilio.domicilio %>
+</p>
+
+
+<%= link_to 'Edit', edit_persona_domicilio_path(@domicilio.persona, @domicilio) %> |
+<%= link_to 'Back', @domicilio.persona %>

@@ -1,0 +1,25 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Factura:</b>
+  <%= @renglon_recibo.factura_id %>
+</p>
+
+<p>
+  <b>Total sin impuestos:</b>
+  <%= @renglon_recibo.total_linea %>
+</p>
+
+<p>
+  <b>Total impuestos:</b>
+  <%= @renglon_recibo.total_impuestos %>
+</p>
+
+<p>
+  <b>Total :</b>
+  <%= @renglon_recibo.total_impuestos + @renglon_recibo.total_linea%>
+</p>
+
+
+<%= link_to 'Edit', edit_renglon_recibo_path(@renglon_recibo) %> |
+<%= link_to 'Back', renglon_recibos_path %>

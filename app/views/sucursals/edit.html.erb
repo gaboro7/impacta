@@ -1,0 +1,116 @@
+<% @internal = "_sucursal" %>
+<script>
+  $(function() {
+    $( "#tabs-inner<%=@internal%>" ).tabs();
+    if (inner_tab)
+      $( "#tabs-inner<%=@internal%>" ).tabs({ selected: inner_tab });
+
+
+    $(".edit_sub_link<%=@internal%>").click(function(){
+      showIframe($(this).attr("data"),$(this).attr("title"),$(this).attr("datah"),$(this).attr("dataw"));
+   
+
+    });
+    $(".delete_sub_list<%=@internal%>").click(function(){
+
+      var url = $(this).attr("action");
+      $('#ventana-borrar-interna').html($(this).attr("title"));
+      $('#ventana-borrar-interna').dialog({
+        resizable: false,
+        height:160,
+        modal: true,
+        buttons: {
+          "Borrar": function() {
+            var data = new Object();
+            var this_false = $( this );
+            data["_method"] = "delete";
+            $.ajax({
+              type: "POST",
+              url: url,
+              data: data,
+              context: document.body,
+              success: function(html_data){
+                this_false.dialog( "close" );
+                reloadIframe("/empresas/<%=@empresa.id%>/sucursals/<%=@sucursal.id%>/edit",$( "#tabs-inner<%=@internal%>" ).tabs( "option", "selected" ));
+
+              }
+            });
+          },
+          "Cancelar": function() {
+            $( this ).dialog( "close" );
+          }
+        }
+      });
+    });
+  });
+</script>
+
+<br /><br />
+
+<%= render 'form' %>
+
+<div id="delete_sub_dialog"></div>
+<div style="position: absolute;left: 380px;top: 10px; width: 550px">
+  <div id="tabs-inner<%=@internal%>">
+    <ul>
+      <li><a href="#tabs-1">Telefonos</a></li>
+      <li><a href="#tabs-2">e-mails</a></li>
+      <li><a href="#tabs-3">Contactos</a></li>
+    </ul>
+    <div id="tabs-1" >
+      <b>Listado Telefonos:</b>
+      <% @contelefono = @sucursal %>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> Telefono </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <%= render @sucursal.telefonos %>
+      </table>
+
+      <div id="modificar_telefonos"></div>
+      <h3>Agregar telefono:</h3>
+      <%= render "telefonos/form" %>
+
+    </div>
+
+    <div id="tabs-2" >
+      <b>Listado e-mails:</b>
+      <% @conmail = @sucursal %>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> e-mail </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <%= render @sucursal.mail_internos %>
+      </table>
+
+      <div id="modificar_emails"></div>
+      <h3>Agregar e-mail:</h3>
+      <%= render "mail_internos/form" %>
+
+    </div>
+
+    <div id="tabs-3" >
+      <h3>Listado Contactos:</h3>
+      <% @contactable = @sucursal %>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> Nombre </th>
+          <th> Sector </th>
+          <th> Interno </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <%= render @sucursal.contactos %>
+      </table>
+      <div id="modificar_contacto"></div>
+      <br/>
+      <h3>Agregar Contacto:</h3>
+      <%= render "contactos/form" %>
+    </div>
+
+  </div>
+</div>

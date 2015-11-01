@@ -1,0 +1,45 @@
+<%= form_for(@renglon_ndd_articulo) do |f| %>
+  <% if @renglon_ndd_articulo.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@renglon_ndd_articulo.errors.count, "error") %> prohibited this renglon_ndd_articulo from being saved:</h2>
+
+      <ul>
+      <% @renglon_ndd_articulo.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :comercializable %><br />
+    <%= f.text_field :comercializable %>
+  </div>
+  <div class="field">
+    <%= f.label :cantidad %><br />
+    <%= f.number_field :cantidad %>
+  </div>
+  <div class="field">
+    <%= f.label :precio %><br />
+    <%= f.text_field :precio %>
+  </div>
+  <div class="field">
+    <%= f.label :total_renglon %><br />
+    <%= f.text_field :total_renglon %>
+  </div>
+  <div class="field">
+    <%= f.label :total_impuestos %><br />
+    <%= f.text_field :total_impuestos %>
+  </div>
+  <div class="field">
+    <%= f.label :descuento %><br />
+    <%= f.text_field :descuento %>
+  </div>
+  <div class="field">
+    <%= f.label :comentario %><br />
+    <%= f.text_field :comentario %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

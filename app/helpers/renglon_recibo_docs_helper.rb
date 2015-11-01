@@ -1,0 +1,2 @@
+module RenglonReciboDocsHelper
+end

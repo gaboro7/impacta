@@ -1,0 +1,15 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Nombre:</b>
+  <%= @formadepago.nombre %>
+</p>
+
+<p>
+  <b>Utilizada:</b>
+  <%= @formadepago.utilizada %>
+</p>
+
+
+<%= link_to 'Edit', edit_formadepago_path(@formadepago) %> |
+<%= link_to 'Back', formadepagos_path %>

@@ -1,0 +1,16 @@
+<tr>
+  <th  class="ui-state-default ui-corner-all">  <%= sucursal.id%> </th>
+
+  <th  class="ui-state-default ui-corner-all">  <%= sucursal.nombre%> </th>
+
+  <th  class="ui-state-default ui-corner-all"> <%= sucursal.domicilio %></th>
+
+ <th  class="ui-state-default ui-corner-all">
+   <a href ="#" data="<%=edit_empresa_sucursal_path(sucursal.empresa,sucursal) %>" dataw="950" datah="600"  class="edit_sub_link" title="Editar sucursal"><span class="ui-icon ui-icon-wrench"></span></a>
+
+</th>
+ <th  class="ui-state-default ui-corner-all">
+<a href="#" action="/empresas/<%=  sucursal.empresa.id %>/sucursals/<%=  sucursal.id %>" class="delete_sub_list" data-method="delete" title="Eliminar sucursal"><span class="ui-icon ui-icon-trash"></span></a>
+ 
+ </th>
+</tr>

@@ -1,0 +1,27 @@
+<h1>Listing descuento_clientes</h1>
+
+<table>
+  <tr>
+    <th>Cliente</th>
+    <th>Comercializable</th>
+    <th>Descuento</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @descuento_clientes.each do |descuento_cliente| %>
+  <tr>
+    <td><%= descuento_cliente.cliente %></td>
+    <td><%= descuento_cliente.comercializable %></td>
+    <td><%= descuento_cliente.descuento %></td>
+    <td><%= link_to 'Show', descuento_cliente %></td>
+    <td><%= link_to 'Edit', edit_descuento_cliente_path(descuento_cliente) %></td>
+    <td><%= link_to 'Destroy', descuento_cliente, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Descuento cliente', new_descuento_cliente_path %>

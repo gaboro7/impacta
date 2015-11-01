@@ -1,0 +1,23 @@
+<p id="notice"><%= notice %></p>
+<h2>ArticulosInd  </h2>
+<p>
+  <b>Nombre:</b>
+  <%= @articuloind.nombre %>
+</p>
+
+<p>
+  <b>Descripci&oacute;n:</b>
+  <%= @articuloind.descripcion %>
+</p>
+
+<h2>rolarticuloOPP</h2>
+<% @rola = @articuloind %>
+<% for c in @articuloind.rolarticulos 
+    @rol = c
+    %>  
+<%=    render :template =>  "comercializables/edit" %> 
+ 
+<% end %>
+
+<%= link_to 'Edit', edit_articuloind_path(@articuloind) %> |
+<%= link_to 'Back', articuloinds_path %>

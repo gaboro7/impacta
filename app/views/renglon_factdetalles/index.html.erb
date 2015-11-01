@@ -1,0 +1,31 @@
+<h1>Listing renglon_factdetalles</h1>
+
+<table>
+  <tr>
+    <th>Factura</th>
+    <th>Detalle</th>
+    <th>Subtotal linea</th>
+    <th>Impuestos</th>
+    <th>Total linea</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @renglon_factdetalles.each do |renglon_factdetalle| %>
+  <tr>
+    <td><%= renglon_factdetalle.factura_id %></td>
+    <td><%= renglon_factdetalle.detalle %></td>
+    <td><%= renglon_factdetalle.subtotal_linea %></td>
+    <td><%= renglon_factdetalle.impuestos %></td>
+    <td><%= renglon_factdetalle.total_linea %></td>
+    <td><%= link_to 'Show', renglon_factdetalle %></td>
+    <td><%= link_to 'Edit', edit_renglon_factdetalle_path(renglon_factdetalle) %></td>
+    <td><%= link_to 'Destroy', renglon_factdetalle, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Renglon factdetalle', new_renglon_factdetalle_path %>

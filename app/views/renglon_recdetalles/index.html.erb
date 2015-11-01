@@ -1,0 +1,31 @@
+<h1>Listing renglon_recdetalles</h1>
+
+<table>
+  <tr>
+    <th>Recibo</th>
+    <th>Detalle</th>
+    <th>Subtotal linea</th>
+    <th>Impuestos</th>
+    <th>Total linea</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @renglon_recdetalles.each do |renglon_recdetalle| %>
+  <tr>
+    <td><%= renglon_recdetalle.recibo_id %></td>
+    <td><%= renglon_recdetalle.detalle %></td>
+    <td><%= renglon_recdetalle.subtotal_linea %></td>
+    <td><%= renglon_recdetalle.impuestos %></td>
+    <td><%= renglon_recdetalle.total_linea %></td>
+    <td><%= link_to 'Show', renglon_recdetalle %></td>
+    <td><%= link_to 'Edit', edit_renglon_recdetalle_path(renglon_recdetalle) %></td>
+    <td><%= link_to 'Destroy', renglon_recdetalle, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Renglon recdetalle', new_renglon_recdetalle_path %>

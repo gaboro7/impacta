@@ -1,0 +1,34 @@
+<% if params[:numero_hoja].nil? %>
+<br />
+<a class="nuevo" href ="#" data="/impuestos/new" dataw="250"  datah="500px" title="Agregar nuevo impuesto">Agregar nuevo Impuesto</a>
+<br /><br />
+<div id="listado">
+  <%  else %>
+    <script type="text/javascript">
+      limpiar_paginado();
+    </script>
+<% end %>
+
+  <table>
+    <tr>
+      <th  class ="ui-state-active" width ="200">Nombre</th>
+      <th  class ="ui-state-active" width ="100">Tasa (%)</th>
+      <th  class ="ui-state-active"></th>
+      <th  class ="ui-state-active"></th>
+    </tr>
+
+  <% @impuestos.each do |impuesto| %>
+    <tr>
+      <td  class="ui-state-default ui-corner-all"><%= impuesto.nombre %></td>
+      <td  class="ui-state-default ui-corner-all"><%= impuesto.porcentajea %></td>
+      <td  class="ui-state-default ui-corner-all"><a href ="#" data="<%=edit_impuesto_path(impuesto) %>" dataw="290"  datah="500px" class="list_link" title="Editar Impuestos"><span class="ui-icon ui-icon-wrench"></span></a></td>
+      <td  class="ui-state-default ui-corner-all"><a href="#" action="/impuestos/<%=  impuesto.id %>" class="delete_list" data-method="delete" title="Eliminar impuestos"><span class="ui-icon ui-icon-trash"></span></a></td>
+    </tr>
+  <% end %>
+  </table>
+
+<%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>
+<% if params[:numero_hoja].nil? %>
+</div>
+<% end %>
+<br />

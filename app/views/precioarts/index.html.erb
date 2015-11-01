@@ -1,0 +1,29 @@
+<h1>Listing precioarts</h1>
+
+<table>
+  <tr>
+    <th>Precio</th>
+    <th>Descuento</th>
+    <th>Comercializable</th>
+    <th>Listaprecio</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @precioarts.each do |precioart| %>
+  <tr>
+    <td><%= precioart.precio %></td>
+    <td><%= precioart.descuento %></td>
+    <td><%= precioart.comercializable %></td>
+    <td><%= precioart.listaprecio %></td>
+    <td><%= link_to 'Show', precioart %></td>
+    <td><%= link_to 'Edit', edit_precioart_path(precioart) %></td>
+    <td><%= link_to 'Destroy', precioart, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Precioart', new_precioart_path %>

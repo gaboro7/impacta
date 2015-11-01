@@ -1,0 +1,30 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>N&uacute;mero factura:</b>
+  <%= @renglon_factura.numero_factura %>
+</p>
+
+<p>
+  <b>N&uacute;mero rengl&oacute;n:</b>
+  <%= @renglon_factura.numero_renglon %>
+</p>
+
+<p>
+  <b>Detalle:</b>
+  <%= @renglon_factura.detalle %>
+</p>
+
+<p>
+  <b>Total renglon:</b>
+  <%= @renglon_factura.total_renglon %>
+</p>
+
+<p>
+  <b>Total impuestos:</b>
+  <%= @renglon_factura.total_impuestos %>
+</p>
+
+
+<%= link_to 'Edit', edit_renglon_factura_path(@renglon_factura) %> |
+<%= link_to 'Back', renglon_facturas_path %>

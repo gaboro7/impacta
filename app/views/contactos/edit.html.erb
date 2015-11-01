@@ -1,0 +1,169 @@
+<%
+
+rand = (0...8).map{65.+(rand(25)).chr}.join %>
+<% @internal = "_contactos"+rand %>
+<% @contelefono = @contacto %>
+<% if @contactable.class.name == "Empresa"
+  @idemp = @contactable.id.to_s
+  @goto = "/empresas/"+@idemp+"/contactos/"+params[:id]
+  @reload = "/empresas/"+@idemp+"/edit"
+elsif @contactable.class.name == "Sucursal"
+  @idene = @contactable.empresa.id.to_s
+  @idenc = @contactable.id.to_s
+  @goto = "/empresas/"+@idene+"/sucursals/"+@idenc+"/contactos/"+params[:id]
+  @reload = "/empresas/"+@idene+"/sucursals/"+@idenc+"/edit"
+end
+%>
+
+
+<script type="text/javascript">
+  $(function(){
+    $( "#editar_contacto<%=rand%>" ).button();
+    $( "#editar_contacto<%=rand%>" ).click(function() {
+      var data = new Object();
+      data['contacto[nombre]'] =	$( "#contacto_nombre_edit<%=rand%>" ).val();
+      data['contacto[interno]'] =	$( "#contacto_interno_edit<%=rand%>" ).val();
+      data['contacto[sector]'] =	$( "#contacto_selector_edit<%=rand%>" ).val();
+      data['contacto[comentarios]'] =	$( "#contacto_comentario_edit<%=rand%>" ).val();
+      data["_method"] =	"put";
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "<%=@goto%>",
+        data: data,
+        context: document.body,
+        success: function(html_data){
+          closeIframe("<%=@goto%>/edit");
+          reloadIframe("<%=@reload%>",2);
+
+        }
+      });
+      return false;
+    });
+  });
+
+  $(function() {
+    $( "#tabs-inner<%=rand%>" ).tabs();
+    if (inner_tab)
+      $( "#tabs-inner<%=rand%>" ).tabs({ selected: inner_tab });
+
+    $(".edit_sub_link<%=@internal%>").click(function(){
+      showIframe($(this).attr("data"),$(this).attr("title"),$(this).attr("datah"),$(this).attr("dataw"))
+    });
+
+    $(".delete_sub_list<%=@internal%>").click(function(){
+
+      var url = $(this).attr("action");
+      $('#ventana-borrar-interna<%=rand%>').html($(this).attr("title"));
+      $('#ventana-borrar-interna<%=rand%>').dialog({
+        resizable: false,
+        height:160,
+        modal: true,
+        buttons: {
+          "Borrar": function() {
+            var data = new Object();
+            var this_false = $( this );
+            data["_method"] = "delete";
+            $.ajax({
+              type: "POST",
+              url: url,
+              data: data,
+              context: document.body,
+              success: function(html_data){
+                this_false.dialog( "close" );
+                reloadIframe("<%=@goto%>/edit",$( "#tabs-inner<%=rand%>" ).tabs( "option", "selected" ));
+
+              }
+            });
+          },
+          "Cancelar": function() {
+            $( this ).dialog( "close" );
+          }
+        }
+      });
+    });
+  });
+</script>
+
+
+<br /><br />
+<%= form_for([@contactable, @contacto]) do |f| %>
+  <% if @contactable.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@contactable.errors.count, "error") %> prohibited this contacto from being saved:</h2>
+
+      <ul>
+        <% @contactable.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div id="ventana-interna<%=rand%>"></div>
+  <div id="ventana-borrar-interna<%=rand%>"></div>
+  <div class="field">
+    <%= f.label :nombre %><br />
+    <div class ="combobox"> <%= f.text_field :nombre, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => 'contacto_nombre_edit'+rand %></div>
+  </div>
+  <div class="field">
+    <%= f.label :sector %><br />
+    <div class ="combobox"> <%= f.text_field :sector, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => 'contacto_selector_edit'+rand  %></div>
+  </div>
+  <div class="field">
+    <%= f.label :interno %><br />
+    <div class ="combobox"> <%= f.text_field :interno, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => 'contacto_interno_edit'+rand %></div>
+  </div>
+  <div class="field">
+    <%= f.label :Comentarios %><br />
+    <div class ="combobox"> <%= f.text_area :comentarios, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => 'contacto_comentario_edit'+rand,  :style => 'height:150px;width:300px'  %></div>
+  </div>
+
+  <div class="actions" >
+    <a id="editar_contacto<%=rand%>">Guardar Cambios </a>
+  </div>
+<% end %>
+
+<div id="delete_sub_dialog<%=rand%>"></div>
+<div style="position: absolute;left: 500px;top: 10px; width: 440px">
+  <div id="tabs-inner<%=rand%>">
+    <ul>
+      <li><a href="#tabs-1<%=rand%>">Telefonos</a></li>
+      <li><a href="#tabs-2<%=rand%>">E-Mail</a></li>
+    </ul>
+    <div id="tabs-1<%=rand%>" >
+      <b>Listado Telefonos:</b>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> Telefono </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <%= render @contacto.telefonos %>
+      </table>
+
+      <div id="modificar_telefonos"></div>
+      <h3>Agregar telefono:</h3>
+      
+      <%= render "telefonos/form" %>
+    </div>
+
+    <div id="tabs-2<%=rand%>" >
+      <b>Listado e-mails:</b>
+      <% @conmail = @contacto %>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> e-mail </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <%= render @contacto.mail_internos %>
+      </table>
+
+      <div id="modificar_emails"></div>
+      <h3>Agregar e-mail:</h3>
+      <%= render "mail_internos/form" %>
+    </div>
+
+  </div>
+</div>
+

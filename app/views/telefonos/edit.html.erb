@@ -1,0 +1,78 @@
+<script type="text/javascript">
+  $(function(){
+    // Datepicker
+
+    $( "#editar_telefono_" ).button();
+    $( "#editar_telefono_" ).click(function() {
+      $(this).button( "disable" )
+      var data = new Object();
+
+//Calculo a donde voy a redirigir
+<%
+    @goto = redirigirTelefono @contelefono
+%>
+      
+      data['telefono[telefono]'] =	$( "#telefono_edit" ).val();
+      //   data['commit'] ="Update Telefono";
+      data["_method"] =	"put";
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "<%=@goto%>/telefonos/<%= params[:id] %>.json",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#editar_telefono_" ).button( "enable" )
+          if (json_data.id){
+
+            closeIframe("<%=@goto%>/telefonos/<%= params[:id] %>/edit");
+            reloadIframe("<%=@goto%>/edit",0)
+          }else{
+            $("#texto_error_telefono_edit").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error_telefono_edit").html($("#texto_error_telefono_edit").html()+error);
+
+            }
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#editar_telefono_" ).button( "enable" )
+          $("#texto_error_telefono_edit").html("");
+          for (var i in xhr){
+            var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+xhr[i]+'.</p></div><br/>';
+            $("#texto_error_telefono_edit").html($("#texto_error_telefono_edit").html()+error);
+
+          }
+        
+        }
+      });
+      return false;
+    });
+  });
+</script>
+<br /><br />
+
+<%= form_for([@contelefono, @contelefono.telefonos.find(params[:id])]) do |f| %>
+  <% debug @contelefono.telefonos.find(params[:id]) %>
+  <% if @contelefono.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@contelefono.errors.count, "error") %> prohibited this comercializable from being saved:</h2>
+
+      <ul>
+        <% @cliente.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+<div id="texto_error_telefono_edit"> </div>
+  <div class="field">
+    <%= f.label :telefono %>
+    <div class ="combobox"> <%= f.text_field :telefono, :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => 'telefono_edit'%> </div>
+  </div>
+  <div class="actions" >
+    <a id="editar_telefono_">Guardar Cambios </a>
+  </div>
+
+<% end %>

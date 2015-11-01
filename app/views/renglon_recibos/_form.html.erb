@@ -1,0 +1,229 @@
+<%= @rand = "" %>
+
+  <%  @rand = (0...8).map{65.+(rand(25)).chr}.join %>
+
+<script>
+
+  $(function() {
+    var moneda_factura_recibo;
+    var total_factura_recibo;
+    var adeudo_factura_recibo;
+    //var total_impuesto_factura_recibo;
+    //var total_importe_factura_recibo;
+    <%  @extra_query = "";
+        if   @recibo.sucursal_id
+          @extra_query =  " and sucursal_id = " + @recibo.sucursal_id.to_s
+        end
+    %>
+
+    var facturas<%= @rand %> = <%=  Factura.where("contado = 0 AND adeudo > 1 AND impresa = TRUE AND anulada = false "+@extra_query+" AND comerciante_id = ?", @recibo.comerciante_id).to_json(:only => [ :numero,:id]).html_safe %>;
+    var factura_id<%= @rand %> = <% if (@renglon_recibo!=nil) %>"<%= @renglon_recibo.factura.id %>" <% else %>null<%end%>;
+    <% if (@renglon_recibo!=nil) %>
+    $( "#renglon_recibo_factura_id<%= @rand %>" ).val("<%= @renglon_recibo.factura.numero %>");
+    <% end %>
+    //$("#renglon_recibo_factura_id<%= @rand %> ").focus();
+
+    $( "#renglon_recibo_total_renglon<%= @rand %>" ).keypress(function(e){
+        if(e.keyCode == 13){
+            $("#guardar_renglon<%= @rand %>").click();
+        }
+     });
+
+    $( "#guardar_renglon<%= @rand %>" ).button();
+    $( "#guardar_renglon<%= @rand %>" ).click(function() {
+      $( "#guardar_renglon<%= @rand %>" ).button( "disable" );
+      var data = new Object();
+
+      <% if(@renglon_recibo != nil) %>
+         data["_method"] =	"put";
+      <% end; %>
+      data['renglon_recibo[factura_id]'] =	factura_id<%= @rand %>;
+//      data['renglon_recibo[total_impuestos]'] =	$( "#renglon_recibo_total_impuestos<%= @rand %>" ).val();
+      data['renglon_recibo[total_renglon]'] =	$( "#renglon_recibo_total_renglon<%= @rand %>" ).val();
+      data['commit'] = "Create recibo"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/recibos/<%= @recibo.id %>/renglon_recibos<% if (@renglon_recibo==nil) %>.json<% else %>/<%= @renglon_recibo.id %>.json<%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar_renglon<%= @rand %>" ).button( "enable" );
+          if (json_data.id){
+            $("#texto_error_inner_renglon<%= @rand %>").html("");
+            <% if (@renglon_recibo!=nil) %>
+              closeIframe("/recibos/<%=@renglon_recibo.recibo_id %>/renglon_recibos/<%=@renglon_recibo.id%>/edit");
+            <% end %>
+            tab_selected.click();
+            reloadIframe("/recibos/<%=@recibo.id%>/edit",0);
+          }else{
+            $("#texto_error_inner_renglon<%= @rand %>").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error_inner_renglon<%= @rand %>").html($("#texto_error_inner_renglon<%= @rand %>").html()+error);
+
+            }
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar_renglon<%= @rand %>" ).button( "enable" )
+          $("#texto_error_inner_renglon<%= @rand %>").html("");
+         
+         
+           
+          var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>Error:</strong>Error interno en el servidor</p></div><br/>';
+          $("#texto_error_inner_renglon<%= @rand %>").html($("#texto_error_inner_renglon<%= @rand %>").html()+error);
+
+          
+        }
+      });
+      return false;
+    });
+
+   function buscar_renglon_recibo<%= @rand %>(fac_id){
+      if(fac_id != ""){
+        $.ajax({
+          type: "GET",
+          url: "/facturas/"+fac_id+".json",
+          context: document.body,
+          success: function(json_data){
+
+            //total_impuesto_factura_recibo = 0;
+            total_importe_factura_recibo = 0;
+
+            for(var i in json_data.renglon_facturas){
+              //total_impuesto_factura_recibo = total_impuesto_factura_recibo + json_data.renglon_facturas[i].total_impuestos;
+              total_importe_factura_recibo = total_importe_factura_recibo + json_data.renglon_facturas[i].total_renglon + json_data.renglon_facturas[i].total_impuestos;
+            }
+            for(var i in json_data.renglon_factdetalles){
+              //total_impuesto_factura_recibo = total_impuesto_factura_recibo + json_data.renglon_factdetalles[i].total_impuestos;
+              total_importe_factura_recibo = total_importe_factura_recibo + json_data.renglon_factdetalles[i].total_renglon+json_data.renglon_factdetalles[i].total_impuestos;
+            }
+
+
+            moneda_factura_recibo = json_data.moneda.tipodecambio;
+            total_factura_recibo = total_importe_factura_recibo ; //+ total_impuesto_factura_recibo;
+            adeudo_factura_recibo = json_data.adeudo;
+
+            //$( "#renglon_recibo_total_impuestos<%= @rand %>" ).val( reondeo( total_impuesto_factura_recibo * (adeudo_factura_recibo/total_factura_recibo) * (moneda_factura_recibo/tipocambio) ));
+            //$( "#renglon_recibo_total_sin_impuestos<%= @rand %>").val(reondeo( total_importe_factura_recibo * (adeudo_factura_recibo/total_factura_recibo) * (moneda_factura_recibo/tipocambio) ));
+            $( "#renglon_recibo_total_renglon<%= @rand %>" ).val(reondeo( adeudo_factura_recibo * (moneda_factura_recibo/tipocambio) ));
+
+          }
+        });
+      }
+    }
+
+  /*  $( "#renglon_recibo_total_renglon<%= @rand %>" ).keyup(function(){
+      if($( "#renglon_recibo_factura_id<%= @rand %>" ).val() != ""){
+        //$( "#renglon_recibo_total_impuestos<%= @rand %>" ).val( reondeo( ( total_impuesto_factura_recibo * ( (($( "#renglon_recibo_total_renglon<%= @rand %>" ).val()) * (tipocambio/moneda_factura_recibo) ) * (1 / total_factura_recibo)) )  * (moneda_factura_recibo/tipocambio) ));
+        $( "#renglon_recibo_total_sin_impuestos<%= @rand %>").val(reondeo( ( total_importe_factura_recibo * ( (($( "#renglon_recibo_total_renglon<%= @rand %>" ).val()) * (tipocambio/moneda_factura_recibo) ) * (1 / total_factura_recibo)) ) * (moneda_factura_recibo/tipocambio) ));
+      }
+    });
+*/
+    $( "#renglon_recibo_factura_id<%= @rand %>" ).autocomplete({
+      source: function( request, response ) {
+        var search = request.term;
+        if(request.term == "no search")
+          search = "";
+        var data =  new Array(); ;
+        $.each(facturas<%= @rand %>, function(i, v) {
+          if ((v.numero+"").toUpperCase().indexOf(search.toUpperCase()) !=-1) {
+            data.push(v)
+
+          }
+        });
+        
+        if(data.length == 0){
+          data = [{
+              id :-1,
+              texto: "no se encontraron resultados"
+            }];
+        }
+        response( $.map( data, function( item ) {
+          if (item.id == -1){
+            return {
+              label: "no se encotraron resultados" ,
+              value: request.term,
+              id :item.id
+            }
+          }else{
+            return {
+              label: item.numero ,
+              value:  item.numero,
+              id :item.id,
+              complete_data : item
+            }
+          }
+        }));
+      },
+      minLength: 1,
+      select: function( event, ui ) {
+
+        if(ui.item.id != -1){
+          // renglon_factura_comercializable_id = ui.item.complete_data.id;
+          //   cargarDatos(ui.item.complete_data.id);
+          // $("#nombre_producto<%= @rand %>").html(ui.item.label);
+          buscar_renglon_recibo<%= @rand %>(ui.item.id);
+          factura_id<%= @rand %> = ui.item.id;
+
+          $("#num_factura_label<%= @rand %>").html(ui.item.label);
+          setTimeout(
+                  function(){
+                      $( "#renglon_recibo_factura_id<%= @rand %>" ).val("");
+                      $( "#renglon_recibo_total_renglon<%= @rand %>" ).focus();
+                  },100);
+        }
+        // showIframe("/articuloinds/"+ui.item.id+"/edit","Editar Articulo",500,500);
+      },
+      open: function() {
+        $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+      },
+      close: function() {
+        $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+      }
+    });
+
+
+  });
+
+</script>
+
+
+<% if  (@renglon_recibo==nil) %>
+  <% @renglon_recibo = RenglonRecibo.new %>
+<% end %>
+
+<%= form_for([@recibo,@renglon_recibo]) do |f| %>
+  <% if @recibo.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@recibo.errors.count, "error") %> prohibited this renglon_factura from being saved:</h2>
+
+      <ul>
+        <% @recibo.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div id="texto_error_inner_renglon<%= @rand %>"></div>
+  <div class="field">
+    <%= f.label :Facturas %>
+
+    <div class ="combobox">
+      <%= f.text_field :factura_id , :size =>20, :class =>  'filtro' ,:id => "renglon_recibo_factura_id" + @rand.to_s  ,:style=>"width: 18em !important;" ,:tabindex=>1%>
+      <!-- <%= f.collection_select(:factura_id,Factura.where("(contado = 2 OR contado = false) AND adeudo > 1 AND impresa = TRUE AND anulada = false AND comerciante_id = ?", @recibo.comerciante_id) , :id,:id , {:prompt => 'Agregar una Factura.'}, :class =>  'text ui-widget-content ui-corner-all', :tabindex=>1, :id => "renglon_recibo_factura_id" + @rand.to_s ) %>-->
+      <span id="num_factura_label<%= @rand %>" style="color: red;"><%if (@renglon_recibo.factura != nil) %><%=  @renglon_recibo.factura.numero  %> <%end;%></span>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= f.label :total_renglon %>
+    <div class ="combobox">  <%= f.text_field :total_renglon, :tabindex=>2, :size =>20, :class =>  'text ui-widget-content ui-corner-all',:id => "renglon_recibo_total_renglon" + @rand.to_s%></div>
+  </div>
+
+  <div class="actions" >
+    <a id="guardar_renglon<%= @rand %>" tabindex=3><%if (@renglon_recibo != nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+<% end %>
+

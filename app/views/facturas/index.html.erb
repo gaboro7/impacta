@@ -1,0 +1,275 @@
+<% if params[:numero_hoja].nil? %>
+<script type="text/javascript">
+  $(function() {
+    var dates = $( "#from, #to" ).datepicker({
+       changeMonth: true,
+      changeYear: true,
+      onSelect: function( selectedDate ) {
+        var option = this.id == "from" ? "minDate" : "maxDate",
+        instance = $( this ).data( "datepicker" ),
+        date = $.datepicker.parseDate(
+        instance.settings.dateFormat ||
+          $.datepicker._defaults.dateFormat,
+        selectedDate, instance.settings );
+        dates.not( this ).datepicker( "option", option, date );
+      }
+    });
+    $( "#radio" ).buttonset();
+
+  });
+
+  $("#send-query").click(function(){
+    var tipo= $('input:radio:checked').attr("id");
+    var from = $( "#from" ).val();
+    var to = $("#to").val();
+    $.ajax({
+
+      url: "facturas/filtered.html?tipo="+tipo+"&cliente="+cliente_id+"&desde="+from+"&hasta="+ to+"&sucursal="+sucursal_id,
+      success: function( data ) {
+        $("#listado").html('<p align ="center"><img  src="/images/ajax-loader.gif" /></p>');
+        $("#listado").html(data);
+      },
+      error: function( xhr, status, index, anchor ) {
+        alert("error");
+      }
+    });
+
+  
+  });
+
+  $("#filter-options").hide();
+  $("#more-filters").button( {icons: {
+      primary: "ui-icon-plusthick"
+    }
+  });
+
+  $("#send-query").button( );
+  var animation = false;
+  $("#more-filters").click(function(){
+    if (!animation){
+      animation = true;
+      var change = '+145';
+      if ($("#filter-options").css('display')=="block"){
+        $("#filter-options").hide();
+        change = '+35';
+      }
+      $("#buscar_factura").animate({
+        height: change
+      }, 500, function() {
+        animation = false;
+        if (change == '+145')
+          $("#filter-options").show();
+      });
+    }
+  });
+
+  $( "#filtro_factura" ).autocomplete({
+    source: function( request, response ) {
+      $.ajax({
+        url: "facturas.json?filtro="+request.term.toString().toUpperCase(),
+        success: function( data ) {
+          data = data
+          if(data.length == 0){
+            data = [{
+                id :-1
+              }];
+          }
+          response( $.map( data, function( item ) {
+            if (item.id == -1){
+              return {
+                label: "no se encotraron resultados" ,
+                value: request.term,
+                id :item.id
+              }
+            }else{
+              return {
+                label: item.numero + " " + ((item.contado)?"Contado":"Credito") ,
+                value: item.numero + " " + ((item.contado)?"Contado":"Credito") ,
+                id :item.id
+              }
+            }
+          })
+        );
+        },
+        error: function( xhr, status, index, anchor ) {
+          return {
+            label: 'no se econtro reultado' ,
+            value: request.term,
+            id :-1
+          }
+        }
+      });
+    },
+    minLength: 1,
+    select: function( event, ui ) {
+      if(ui.item.id != -1)
+        showIframe("/facturas/"+ui.item.id+"/edit","Editar Factura",1000,600);
+    },
+    open: function() {
+      $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+    },
+    close: function() {
+      $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+    }
+  });
+
+  var cliente_id = -1;
+  var sucursal_id = -1;
+  $( "#filtro_cliente" ).autocomplete({
+      source: function( request, response ) {
+        cliente_id = -1;
+        sucursal_id = -1;
+        $.ajax({
+          url: "empresas.json?filtro="+request.term+"&contado="+$("#contador:checked").length,
+          success: function( data ) {
+
+            if(data.empresas.length == 0 && data.sucursales.length == 0 &&  data.personas.length == 0){
+              data = [{
+                  id :-1
+                }];
+            }else{
+
+              var aux = new Array();
+              data = aux.concat(data.empresas,data.sucursales,data.personas);
+
+            }
+            response( $.map( data, function( item ) {
+
+              if (item.id == -1){
+                return {
+                  label: "no se encotraron resultados" ,
+                  value: request.term,
+                  id :item.id
+                }
+              }else{
+                if (item.empresa){
+
+                  return {
+                    label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                    value: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                    id: item.empresa.id,
+                    sucursal_id : item.id,
+                    domicilio : item.domicilio,
+                    nombre :item.nombre+ " ["+ item.empresa.nombre+"]",
+                    rut : item.empresa.nif
+
+                  }
+                }
+                else
+                  return {
+                    label: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                    value: "<" + item.id + ">" + item.nombre + " ["+ item.domicilio+"]",
+                    id :item.id,
+                    sucursal_id : -1,
+                    domicilio : item.domicilio,
+                    nombre :item.nombre,
+                    rut : item.nif
+
+                  }
+              }
+            })
+          );
+          },
+          error: function( xhr, status, index, anchor ) {
+            return {
+              label: 'no se econtro reultado' ,
+              value: request.term,
+              id :-1
+            }
+          }
+        });
+      },
+      minLength: 1,
+      select: function( event, ui ) {
+        if(ui.item.id != -1){
+          // showIframe("/empresas/"+ui.item.id+"/edit","Editar Empresa",960,600);
+          sucursal_id =  ui.item.sucursal_id;
+ //         $( "#factura_rut" ).val( ui.item.rut);
+  //        $( "#factura_direccion_cliente" ).val(ui.item.domicilio);
+          cliente_id =(ui.item.id);
+        }
+      },
+      open: function() {
+        $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+      },
+      close: function() {
+        $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+      }
+    });
+
+</script>
+<br />
+<a class="nuevo" href ="#" data="/facturas/new" dataw="690"  datah="500px" style="position:relative; width:200px" title="Agregar nueva Factura">Agregar nueva Factura</a>
+<div id="buscar_factura" style="left: 240px; position: relative; top: -29px; width: 600px; height: 35px; margin-bottom: -48px;">
+  <label for="filtro_factura">Número: </label>
+  <input id="filtro_factura" style="width:11em;" class="filtro" />
+  <span id="more-filters" >B&uacute;squeda</span>
+
+  <div id ="filter-options" style="position: relative;left: -240px;top:5px ;border-style:solid;border-width:0.2px; border-color: #FFFFFF; width: 900px; height: 80px; padding: 10px 0 0 10px;">
+    <span id="radio">
+      <input type="radio" id="todas" name="radio" checked="true"/><label for="todas">Todas</label>
+      <input type="radio" id="contado" name="radio"  /><label for="contado">Contado</label>
+      <input type="radio" id="credito" name="radio" /><label for="credito">Cr&eacute;dito</label>
+    </span>
+    <span class="rango-fecha">
+      <label for="from">Desde</label>
+      <input type="text" id="from" name="from"/>
+      <label for="to">Hasta</label>
+      <input type="text" id="to" name="to"/>
+    </span>
+    <div style ="width:220px;padding: 3px;float: left;">
+      <label for="filtro_cliente">Cliente: </label>
+      <input id="filtro_cliente" style="width:11em;" class="filtro" />
+    </div>
+    <div  style ="width:60px;float: right;padding: 10px; padding-right: 40px">
+      <span id="send-query" >Filtrar</span>
+    </div>
+  </div>
+</div>
+
+
+<br /><br />
+<div id="listado">
+  <%  else %>
+    <script type="text/javascript">
+      limpiar_paginado();
+    </script>
+<% end %>
+  <table>
+    <tr>
+      <th class ="ui-state-active" width ="120">N&uacute;mero</th>
+      <th class ="ui-state-active" width ="300">Cliente</th>
+      <th class ="ui-state-active" width ="300">Direcci&oacute;n cliente</th>
+      <th class ="ui-state-active" width ="60">Estado</th>
+      <th class ="ui-state-active" width ="200">Total final</th>
+      <th class ="ui-state-active" width ="200">Saldo</th>
+      <th class ="ui-state-active" width ="120">Moneda</th>
+      <th class ="ui-state-active" width ="100">Fecha</th>
+      <th class ="ui-state-active"></th>
+      <th class ="ui-state-active"></th>
+    </tr>
+
+    <% @facturas.each do |factura| %>
+      <tr>
+        <td  class="ui-state-default ui-corner-all"><%= !factura.numero.nil? ? factura.numero : " " %></td>
+        <td  class="ui-state-default ui-corner-all"><%= factura.comerciante.nombre %><% if factura.sucursal %>[<%= factura.sucursal.nombre %>]<% end %></td>
+        <td  class="ui-state-default ui-corner-all"><% if factura.sucursal %><%= factura.sucursal.domicilio %><% else %><%= factura.direccion_cliente %><% end %></td>
+        <td  class="ui-state-default ui-corner-all"><%= (factura.anulada)?"Anulada":(factura.impresa)?"Impresa":"S/Imprimir" %></td>
+        <td  class="ui-state-default ui-corner-all"><%=  "%.2f"  %(factura.total_sinimpuestos + factura.total_impuestos) %></td>
+        <td  class="ui-state-default ui-corner-all"><% if (factura.contado) %><%= "Contado" %><% elsif (factura.adeudo > 1)%><%= factura.adeudo %> <% else  %> <%= "0.00" %><% end %></td></td>
+        <td  class="ui-state-default ui-corner-all"><%= factura.moneda.nombre %></td>
+        <td  class="ui-state-default ui-corner-all"><%= factura.fecha %></td>
+
+        <td  class="ui-state-default ui-corner-all"><a href ="#" data="/facturas/<%= factura.id %>/edit" dataw="600"  datah="1000px" class="list_link" title="Editar Factura"><span class="ui-icon ui-icon-wrench"></span></a>
+
+        <td  class="ui-state-default ui-corner-all"><a href="#" class="" data-method="delete" title="Eliminar Factura"><span class="ui-icon ui-icon-trash <%= (factura.anulada)?"ui-state-disabled":(factura.impresa)?"ui-state-disabled":"delete_list" %>" action="/facturas/<%= factura.id %>" ></span></a></td>
+
+      </tr>
+    <% end %>
+  </table>
+<%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>
+<% if params[:numero_hoja].nil? %>
+</div>
+<% end %>
+
+

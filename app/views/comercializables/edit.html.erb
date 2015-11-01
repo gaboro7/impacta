@@ -1,0 +1,196 @@
+  <%  @rand = (0...8).map{65.+(rand(25)).chr}.join %>
+<script type="text/javascript">
+  var promociones = new Array();
+  $(function(){
+    // Datepicker
+
+    $( "#guardarRol" ).button();
+    $( "#guardarRol" ).click(function() {
+      var data = new Object();
+
+<% if(@rol.id!=nil) %>
+        data["_method"] =	"put";
+<% end; %>
+      data['comercializable[descuento]'] =	$( "#comercializable_descuento" ).val();
+
+      var impuestos_ids = new Array();
+      var promociones_ids = new Array();
+      $(".impuestos:checked").each(function(){
+
+        impuestos_ids.push(parseInt($(this).attr("data")));
+
+      });
+
+      var arr = $('#agregar_promocion<%= @rand %>').val().split(",");
+      for (var i in arr){
+        promociones_ids.push(promociones[arr[i]]);
+      }
+      data['comercializable[impuesto_ids][]'] = impuestos_ids;
+      data['comercializable[promocion_ids][]'] = promociones_ids;
+      data['commit'] =	"Create Comercializable";
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/articuloinds/<%= @rola.id %>/comercializables<% if (@rol.id==nil) %>.json/ <% else %>/<%= @rol.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar" ).button( "enable" )
+          if (json_data.id){
+            $("#texto_error").html("");
+            
+            reloadIframe("/articuloinds/<%= @rola.id %>/edit");
+          }else{
+            $("#texto_error").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#texto_error").html($("#texto_error").html()+error);
+
+            }
+          }
+
+        
+
+        }
+      });
+      return false;
+    });
+
+      $( "#busqueda_promocion" ).autocomplete({
+      source: function( request, response ) {
+         var search = request.term;
+        if(request.term == "no search")
+          search = "";
+        var url = "/promocions.json?filtro="+search;
+        $.ajax({
+          url: url,
+          success: function( data ) {
+
+            if(data.length == 0){
+              data = [{
+                  id :-1,
+                  texto: "no se encontraron resultados"
+                }];
+            }
+            response( $.map( data, function( item ) {
+              if (item.id == -1){
+                return {
+                  label: "no se encotraron resultados" ,
+                  value: request.term,
+                  id :item.id
+                }
+              }else{
+                return {
+                  label: item.descripcion + " (" + item.id + ")" ,
+                  value:  item.descripcion ,
+                  id :item.id,
+                  complete_data : item
+                }
+              }
+            })
+          );
+          },
+          error: function( xhr, status, index, anchor ) {
+            return {
+              label: 'no se econtro reultado' ,
+              value: request.term,
+              id :-1
+            }
+          }
+        });
+      },
+      minLength: 1,
+      select: function( event, ui ) {
+
+        if(ui.item.id != -1){
+
+
+           var arr = $('#agregar_promocion<%= @rand %>').val().split(",");
+           if (jQuery.inArray(ui.item.value, arr) < 0)
+            $('#agregar_promocion<%= @rand %>').addTag(ui.item.value);
+        }
+        // showIframe("/articuloinds/"+ui.item.id+"/edit","Editar Articulo",500,500);
+      },
+      open: function() {
+        $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+      },
+      close: function() {
+        $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+      }
+    });
+
+       $('#agregar_promocion<%= @rand %>').tagsInput({
+          // my parameters here
+          defaultText : " "
+        });
+
+       <% for fp in Promocion.all %>
+        <% if @rol.id != nil
+            if  @rol.promocions.include?(fp) %>
+             $('#agregar_promocion<%= @rand %>').addTag('<%= fp.descripcion %>');
+
+        <%  end
+          end %>
+            promociones['<%= fp.descripcion %>'] = '<%= fp.id %>';
+       <% end %>
+  });
+</script>
+<%= form_for([@rola,@rol]) do |f| %>
+  <% if @rola.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@rola.errors.count, "error") %> prohibited this comercializable from being saved:</h2>
+      <ul>
+        <% @rola.errors.full_messages.each do |msg| %>
+          <li>
+            <%= msg %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div class="field">
+    <%= f.label :descuento %>
+
+    <div class ="combobox"><%= f.text_field :descuento, :size =>20, :class =>  'text ui-widget-content ui-corner-all' %></div>
+  </div>
+  <div class="field" >
+    <%= f.label :impuestos %>
+     
+   
+    <br />
+    <%  if(Impuesto.all.size > 0) %>
+      <% for imp in Impuesto.all %>
+        <%= label_tag "comercializable[impuesto_ids][]", imp.nombre, :for => "comercializable[impuesto_ids][]" %>
+        <div class ="combobox">  <%= check_box_tag "comercializable[impuesto_ids][]", imp.id, @rol.impuestos.include?(imp), :class => "impuestos" , :data => imp.id %> </div>
+
+        <br />
+      <% end %>
+    <% else %>
+      No hay Impuetos ingresados a aplicar
+    <% end %>
+  </div>
+  <div class="field" >
+    <%= f.label :promociones %>
+    <div class ="combobox"><input id="busqueda_promocion" size="20" type="text" class="filtro" style="width: 18em !important;"/>
+         <span id="nombre_producto<%= @rand %>" style="color: red;"></span>
+     </div>
+
+   
+  </div>
+
+  <% for pa in @rol.precioarts
+    @comercializable = @rol
+    @listaprecio = pa.listaprecio
+    @precioart = pa
+  %>
+  <% end %>
+   <div style="height: 80px; ">
+         <div id="agregar_promocion<%= @rand %>"  ></div>
+    </div>
+    <br />  <br /><br />
+  <div class="actions">
+    <a id="guardarRol"><%if (@rol.id!=nil) %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+
+
+<% end %>

@@ -1,0 +1,180 @@
+<script>
+<%
+
+@rand = "";
+if (@precioarts!=nil)
+  @rand = @precioarts.id
+
+end
+
+%>
+  var renglon_lista_comercializable_id<%= @rand %> = <%if (!@precioarts.nil?) %><%=  @precioarts.comercializable.id  %><%else%>-1<%end;%>;
+  $(function() {
+
+    $( "#guardar_precioart<%= @rand %>" ).button();
+    $( "#guardar_precioart<%= @rand %>" ).click(function() {
+      $( "#guardar_precioart<%= @rand %>" ).button("disable");
+      var data = new Object();
+<% if( @precioarts!=nil) %>
+        data["_method"] =	"put";
+<% end; %>
+      data["precioart[precio]"] =	$( "#precioart_precio<%= @rand %>" ).val();
+      data["precioart[descuento]"] =	$( "#precioart_descuento<%= @rand %>" ).val();
+      data["precioart[comercializable_id]"] =	renglon_lista_comercializable_id<%= @rand %>;
+
+
+      data['commit'] = "Update Listaprecios"
+      data["utf8"] =	true;
+      $.ajax({
+        type: "POST",
+        url: "/listaprecios/<%= @listaprecio.id %>/precioarts<% if (@precioarts ==nil) %>.json/ <% else %>/<%= @precioarts.id %>.json <%end%>",
+        data: data,
+        context: document.body,
+        success: function(json_data){
+          $( "#guardar_precioart<%= @rand %>" ).button( "enable" )
+          if (json_data.id){
+              
+<% if( @precioarts!=nil) %>
+              closeIframe("/listaprecios/<%=@listaprecio.id%>/precioarts/<%=@precioarts.id %>/edit");
+<% end;%>
+            reloadIframe("/listaprecios/<%=@listaprecio.id%>/edit");
+          }else{
+            $("#ineer_error<%= @rand %>").html("");
+            for (var i in json_data){
+              var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>'+i+':</strong> '+json_data[i]+'.</p></div><br/>';
+              $("#ineer_error<%= @rand %>").html($("#ineer_error<%= @rand %>").html()+error);
+
+            }
+          }
+        },
+        error: function( xhr, status, index, anchor ) {
+          $( "#guardar_precioart<%= @rand %>" ).button( "enable" )
+          $("#ineer_error<%= @rand %>").html("");
+          
+            var error = '<div style="padding: 0 .2em;" class="ui-state-error ui-corner-all"><p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span><strong>Error:</strong>Error inerno.</p></div><br/>';
+            $("#ineer_error<%= @rand %>").html($("#ineer_error<%= @rand %>").html()+error);
+
+          
+        }
+      });
+      return false;
+    });
+  });
+   $( "#comercializable_id<%= @rand %>" ).autocomplete({
+      source: function( request, response ) {
+         var search = request.term;
+        if(request.term == "no search")
+          search = "";
+        var url = "/articuloinds.json?comercializable="+search;
+        $.ajax({
+          url: url,
+          success: function( data ) {
+
+            if(data.length == 0){
+              data = [{
+                  id :-1,
+                  texto: "no se encontraron resultados"
+                }];
+            }
+            response( $.map( data, function( item ) {
+              if (item.id == -1){
+                return {
+                  label: "no se encotraron resultados" ,
+                  value: request.term,
+                  id :item.id
+                }
+              }else{
+                return {
+                  label: item.nombre + " (" + item.id + ")" ,
+                  value:  item.nombre ,
+                  id :item.id,
+                  complete_data : item
+                }
+              }
+            })
+          );
+          },
+          error: function( xhr, status, index, anchor ) {
+            return {
+              label: 'no se econtro reultado' ,
+              value: request.term,
+              id :-1
+            }
+          }
+        });
+      },
+      minLength: 1,
+      select: function( event, ui ) {
+
+        if(ui.item.id != -1){
+          renglon_lista_comercializable_id<%= @rand %> = ui.item.complete_data.id;
+         // cargarDatos(ui.item.complete_data.id);
+          $("#nombre_producto<%= @rand %>").html(ui.item.label  );
+        }
+        // showIframe("/articuloinds/"+ui.item.id+"/edit","Editar Articulo",500,500);
+      },
+      open: function() {
+        $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+      },
+      close: function() {
+        $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+      }
+    });
+
+</script>
+
+<% if  (@precioarts==nil) %>
+  <% @precioarts = Precioart.new %>
+<% end %>
+<%= form_for([@listaprecio,@precioarts]) do |f| %>
+  <% if (@precioarts==nil) %>
+    <% if @listaprecio.errors.any? %>
+      <div id="error_explanation">
+        <h2><%= pluralize(@listaprecio.errors.count, "error") %> prohibited this precioart from being saved:</h2>
+
+        <ul>
+          <% @listaprecio.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  <% else %>
+    <% if @precioarts.errors.any? %>
+      <div id="error_explanation">
+        <h2><%= pluralize(@precioarts.errors.count, "error") %> prohibited this precioart from being saved:</h2>
+
+        <ul>
+          <% @precioarts.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :Articulos %>
+   <!-- <div class ="combobox">  <%= f.collection_select(:comercializable_id,Comercializable.all(:include => :rola ) , :id,:nombreart , {:prompt => 'Agregar un Articulo'}, :class =>  'text ui-widget-content ui-corner-all' , :id => "precioart_comercializable_id" + @rand.to_s()) %></div> -->
+   <div class ="combobox"> <%= f.text_field :comercializable_id , :size =>20, :class =>  'filtro' ,:id => "comercializable_id" + @rand.to_s  ,:style=>"width: 18em !important;" ,:tabindex=>1%>
+     <span id="nombre_producto<%= @rand %>" style="color: red;"><%if (@precioarts.comercializable != nil) %><%=  @precioarts.comercializable.nombreart  %> <%end;%></span>
+   </div>
+  </div>
+
+  <div id="ineer_error<%= @rand %>"></div>
+  <div class="field">
+    <%= f.label :precio %><br />
+    <div class ="combobox"> <%= f.text_field :precio , :size =>20, :class =>  'text ui-widget-content ui-corner-all', :id => "precioart_precio" + @rand.to_s()%></div>
+  </div>
+  <div class="field">
+    <%= f.label :descuento %><br />
+    <div class ="combobox"> <%= f.text_field :descuento , :size =>20, :class =>  'text ui-widget-content ui-corner-all' , :id => "precioart_descuento" + @rand.to_s()%></div>
+  </div>
+
+
+
+  <div class="actions" >
+    <a id="guardar_precioart<%= @rand %>"><%if (@rand!="") %>Guardar Cambios <%else%>Crear Nuevo<%end;%> </a>
+  </div>
+
+<% end %>

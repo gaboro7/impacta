@@ -1,0 +1,39 @@
+<script type="text/javascript">
+  limpiar_paginado();
+</script>
+<table>
+    <tr>
+      <th class ="ui-state-active" width ="110">Numero</th>
+      <th class ="ui-state-active" width ="300">Cliente</th>
+      <th class ="ui-state-active" width ="300">Rut</th>
+      <th class ="ui-state-active" width ="300">Direccion cliente</th>
+      <th class ="ui-state-active" width ="60">Estado</th>
+      <th class ="ui-state-active" width ="200">Total final</th>
+      <th class ="ui-state-active" width ="200">Adeudo</th>
+      <th class ="ui-state-active" width ="120">Moneda</th>
+      <th class ="ui-state-active" width ="100">Fecha</th>
+      <th class ="ui-state-active"></th>
+      <th class ="ui-state-active"></th>
+    </tr>
+
+    <% @facturas.each do |factura| %>
+      <tr>
+        <td  class="ui-state-default ui-corner-all"><%= factura.numero.nil? ? " " : factura.numero %></td>
+        <td  class="ui-state-default ui-corner-all"><%= factura.comerciante.nombre %><% if factura.sucursal %>[<%= factura.sucursal.nombre %>]<% end %></td>
+        <td  class="ui-state-default ui-corner-all"><%= factura.rut %></td>
+        
+        <td  class="ui-state-default ui-corner-all"><%= factura.direccion_cliente %></td>
+        <td  class="ui-state-default ui-corner-all"><%= (factura.anulada)?"Anulada":(factura.impresa)?"Impresa":"S/Imprimir" %></td>
+        <td  class="ui-state-default ui-corner-all"><%=  "%.2f"  %(factura.total_sinimpuestos + factura.total_impuestos) %></td>
+        <td  class="ui-state-default ui-corner-all"><% if (factura.contado) %><%= "Contado" %><% elsif (factura.adeudo > 1)%><%= factura.adeudo %> <% else  %> <%= "0.00" %><% end %>
+        <td  class="ui-state-default ui-corner-all"><%= factura.moneda.nombre %></td>
+        <td  class="ui-state-default ui-corner-all"><%= factura.fecha %></td>
+
+        <td  class="ui-state-default ui-corner-all"><a href ="#" data="<%=edit_factura_path(factura) %>" dataw="600"  datah="1000px" class="list_link" title="Editar Factura"><span class="ui-icon ui-icon-wrench"></span></a>
+
+        <td  class="ui-state-default ui-corner-all"><a href="#" action="/facturas/<%=  factura.id %>" class="delete_list" data-method="delete" title="Eliminar Factura"><span class="ui-icon ui-icon-trash"></span></a></td>
+
+      </tr>
+    <% end %>
+  </table>
+<%=  will_paginate @facturas, :param_name => :numero_hoja , :class => :flickr_pagination %>

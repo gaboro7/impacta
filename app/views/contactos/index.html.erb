@@ -1,0 +1,36 @@
+<h1>Contactos</h1>
+
+<div id="contactos">
+<% for contacto in @contactos %>
+  <div class="Contacto">
+    <%=simple_format contacto.nombre %>
+    <%=simple_format contacto.sector %>
+    <%=simple_format contacto.interno %>
+    <%=simple_format contacto.comentarios %>
+  </div>
+<% end %>
+</div>
+
+
+<h2>Nuevo Contacto</h2>
+
+<% form_for [@commentable, Contacto.new] do |f| %>
+  <p>
+    <%= f.label :Nombre %><br />
+    <%= f.text_field :nombre %>
+  </p>
+  <p>
+    <%= f.label :Sector %><br />
+    <%= f.text_field :sector%>
+  </p>
+  <p>
+    <%= f.label :Interno %><br />
+    <%= f.number_field :interno %>
+  </p>
+  <p>
+    <%= f.label :Comentarios %><br />
+    <%= f.text_field :comentarios %>
+  </p>
+  <p><%= f.submit "Submit" %></p>
+<% end %>
+

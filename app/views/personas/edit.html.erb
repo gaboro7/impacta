@@ -1,0 +1,112 @@
+<script>
+  $(function() {
+    $( "#tabs-inner" ).tabs();
+     if (inner_tab)
+      $( "#tabs-inner<%=@internal%>" ).tabs({ selected: inner_tab });
+
+    $(".edit_sub_link").click(function(){
+      showIframe($(this).attr("data"), $(this).attr("title"),$(this).attr("dataw"),$(this).attr("datah"))
+
+    });
+    $(".delete_sub_list").click(function(){
+
+      var url = $(this).attr("action");
+      $('#ventana-borrar-interna').html($(this).attr("title"));
+      $('#ventana-borrar-interna').dialog({
+        resizable: false,
+        height:160,
+        modal: true,
+        buttons: {
+          "Borrar": function() {
+            var data = new Object();
+            var this_false = $( this );
+            data["_method"] = "delete";
+            $.ajax({
+              type: "POST",
+              url: url,
+              data: data,
+              context: document.body,
+              success: function(html_data){
+                this_false.dialog( "close" );
+                reloadIframe("/personas/<%=  @persona.id%>/edit",inner_tab);
+
+              }
+            });
+          },
+          "Cancelar": function() {
+            $( this ).dialog( "close" );
+          }
+        }
+      });
+    });
+  });
+</script>
+
+
+<%= render 'form' %>
+<div id="ventana-borrar-interna"></div>
+<div id="ventana-interna"></div>
+<div style="position: absolute;left: 380px;top: 10px; width: 550px">
+  <div id="tabs-inner">
+    <ul>
+      <li><a href="#tabs-1">Telefonos</a></li>
+      <li><a href="#tabs-2">e-mails</a></li>
+      <li><a href="#tabs-3">Descuento Articulo</a></li>
+    </ul>
+    <div id="tabs-1" >
+      <b>Listado Telefonos:</b>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> Telefono </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <% @contelefono = @persona %>
+        <%= render @persona.telefonos %>
+      </table>
+
+      <div id="modificar_telefonos"></div>
+      <h3>Agregar telefono:</h3>
+      <% @contelefono = @persona %>
+      <%= render "telefonos/form" %>
+    </div>
+
+    <div id="tabs-2" >
+      <b>Listado de e-mails:</b>
+      <table>
+        <tr class ="ui-state-active" width ="400">
+          <th> e-mail </th>
+          <th  class ="ui-state-active"></th>
+          <th  class ="ui-state-active"></th>
+        </tr>
+        <% @conmail = @persona %>
+        <%= render @persona.mail_internos %>
+      </table>
+
+      <div id="modificar_mails"></div>
+      <h3>Agregar e-mail:</h3>
+      <% @conmail = @persona %>
+      <%= render "mail_internos/form" %>
+    </div>
+
+    <div id="tabs-3" >
+    
+      <p>
+
+      <table>
+        <tr>
+        <th class ="ui-state-active" width ="400"> Art&iacute;culo </th>
+        <th class ="ui-state-active" width ="400"> Descuento (%)</th>
+        <th class ="ui-state-active">  </th>
+        <th class ="ui-state-active">  </th>
+        </tr>
+
+        <%= render @persona.descuento_clientes %>
+
+      </table>
+
+      </p>
+       <%= render "descuento_clientes/form" %>
+    </div>
+  </div>
+</div>

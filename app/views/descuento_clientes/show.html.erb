@@ -1,0 +1,20 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Cliente:</b>
+  <%= @descuento_cliente.cliente %>
+</p>
+
+<p>
+  <b>Comercializable:</b>
+  <%= @descuento_cliente.comercializable %>
+</p>
+
+<p>
+  <b>Descuento:</b>
+  <%= @descuento_cliente.descuento %>
+</p>
+
+
+<%= link_to 'Edit', edit_descuento_cliente_path(@descuento_cliente) %> |
+<%= link_to 'Back', descuento_clientes_path %>

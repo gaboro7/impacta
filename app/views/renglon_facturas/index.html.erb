@@ -1,0 +1,31 @@
+<h1>Listing renglon_facturas</h1>
+
+<table>
+  <tr>
+    <th>N&uacute;mero factura</th>
+    <th>N&uacute;mero rengl&oacute;n</th>
+    <th>Detalle</th>
+    <th>Total renglon</th>
+    <th>Total impuestos</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @renglon_facturas.each do |renglon_factura| %>
+  <tr>
+    <td><%= renglon_factura.numero_factura %></td>
+    <td><%= renglon_factura.numero_renglon %></td>
+    <td><%= renglon_factura.detalle %></td>
+    <td><%= renglon_factura.total_renglon %></td>
+    <td><%= renglon_factura.total_impuestos %></td>
+    <td><%= link_to 'Show', renglon_factura %></td>
+    <td><%= link_to 'Edit', edit_renglon_factura_path(renglon_factura) %></td>
+    <td><%= link_to 'Destroy', renglon_factura, confirm: 'Está seguro?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Renglon factura', new_renglon_factura_path %>

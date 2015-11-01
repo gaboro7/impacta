@@ -1,0 +1,33 @@
+<h1>Listing renglon_recibo_docs</h1>
+
+<table>
+  <tr>
+    <th>Recibo</th>
+    <th>Documento</th>
+    <th>Documento type</th>
+    <th>Total renglon</th>
+    <th>Total impuestos</th>
+    <th>Detalle</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @renglon_recibo_docs.each do |renglon_recibo_doc| %>
+  <tr>
+    <td><%= renglon_recibo_doc.recibo %></td>
+    <td><%= renglon_recibo_doc.documento_id %></td>
+    <td><%= renglon_recibo_doc.documento_type %></td>
+    <td><%= renglon_recibo_doc.total_renglon %></td>
+    <td><%= renglon_recibo_doc.total_impuestos %></td>
+    <td><%= renglon_recibo_doc.detalle %></td>
+    <td><%= link_to 'Show', renglon_recibo_doc %></td>
+    <td><%= link_to 'Edit', edit_renglon_recibo_doc_path(renglon_recibo_doc) %></td>
+    <td><%= link_to 'Destroy', renglon_recibo_doc, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Renglon recibo doc', new_renglon_recibo_doc_path %>

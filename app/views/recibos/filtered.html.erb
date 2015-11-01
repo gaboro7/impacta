@@ -1,0 +1,32 @@
+<script type="text/javascript">
+  limpiar_paginado();
+</script>
+<br/><br/>
+<table>
+  <tr>
+      <th class ="ui-state-active" width ="120">N&uacute;mero</th>
+    <th class ="ui-state-active" width ="270">Cliente</th>
+    <th class ="ui-state-active" width ="200">Estado</th>
+    <th class ="ui-state-active" width ="200">Total</th>
+    <th class ="ui-state-active" width ="120">Moneda</th>
+    <th class ="ui-state-active" width ="200">Fecha</th>
+    <th class ="ui-state-active"></th>
+    <th class ="ui-state-active"></th>
+
+  </tr>
+
+<% @recibos.each do |recibo| %>
+  <tr>
+    <td class="ui-state-default ui-corner-all"><%= !recibo.numero.nil? ? recibo.numero : " " %></td>
+    <td class="ui-state-default ui-corner-all"><%= recibo.comerciante.nombre %><% if recibo.sucursal %>[<%= recibo.sucursal.nombre %>]<% end %></td>
+    <td  class="ui-state-default ui-corner-all"><%= (recibo.anulada)?"Anulado":(recibo.impresa)?"Impresa":"S/Imprimir" %></td>
+    <td  class="ui-state-default ui-corner-all"><%=  "%.2f"  %recibo.total_sinimpuestos %></td>
+    <td  class="ui-state-default ui-corner-all"><%= recibo.moneda.nombre %></td>
+    <td class="ui-state-default ui-corner-all"><%= recibo.fecha %></td>
+    <td  class="ui-state-default ui-corner-all"><a href ="#" data="<%=edit_recibo_path(recibo) %>" dataw="370"  datah="500px" class="list_link" title="Editar recibo"><span class="ui-icon ui-icon-wrench"></span></a></td>
+
+    <td  class="ui-state-default ui-corner-all"><a href="#"  data-method="delete" title="Eliminar recibo"><span class="ui-icon ui-icon-trash <%= (recibo.anulada)?"ui-state-disabled":(recibo.impresa)?"ui-state-disabled":"delete_list" %>" action="/recibos/<%=  recibo.id %>"></span></a></td>
+   </tr>
+<% end %>
+</table>
+<%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>

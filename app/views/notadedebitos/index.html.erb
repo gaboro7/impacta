@@ -1,0 +1,236 @@
+<% if params[:numero_hoja].nil? %>
+<script type="text/javascript">
+  $(function() {
+    var dates = $( "#from, #to" ).datepicker({
+      changeMonth: true,
+      onSelect: function( selectedDate ) {
+        var option = this.id == "from" ? "minDate" : "maxDate",
+        instance = $( this ).data( "datepicker" ),
+        date = $.datepicker.parseDate(
+        instance.settings.dateFormat ||
+          $.datepicker._defaults.dateFormat,
+        selectedDate, instance.settings );
+        dates.not( this ).datepicker( "option", option, date );
+      }
+    });
+    $( "#radio" ).buttonset();
+
+  });
+
+  $("#send-query").click(function(){
+    var tipo= $('input:radio:checked').attr("id");
+    var from = $( "#from" ).val();
+    var to = $("#to").val();
+    $.ajax({
+
+      url: "notadedebitos/filtered.html?tipo="+tipo+"&cliente="+cliente_id+"&desde="+from+"&hasta="+ to,
+      success: function( data ) {
+        $("#listado").html('<p align ="center"><img  src="/images/ajax-loader.gif" /></p>');
+        $("#listado").html(data);
+      },
+      error: function( xhr, status, index, anchor ) {
+        alert("error");
+      }
+    });
+
+
+  });
+
+  $("#filter-options").hide();
+  $("#more-filters").button( {icons: {
+      primary: "ui-icon-plusthick"
+    }
+  });
+
+  $("#send-query").button( );
+  var animation = false;
+
+  $("#more-filters").click(function(){
+   
+    if (!animation){
+      animation = true;
+      var change = '+145';
+      if ($("#filter-options").css('display')=="block"){
+        $("#filter-options").hide();
+        change = '+35';
+      }
+      $("#buscar_notadedebito").animate({
+        height: change
+      }, 500, function() {
+        animation = false;
+        if (change == '+145')
+          $("#filter-options").show();
+      });
+    }
+  });
+
+  $( "#filtro_notadedebito" ).autocomplete({
+    source: function( request, response ) {
+      $.ajax({
+        url: "notadedebitos.json?filtro="+request.term,
+        success: function( data ) {
+          data = data
+          if(data.length == 0){
+            data = [{
+                id :-1
+              }];
+          }
+          response( $.map( data, function( item ) {
+            if (item.id == -1){
+              return {
+                label: "no se encotraron resultados" ,
+                value: request.term,
+                id :item.id
+              }
+            }else{
+              return {
+                label: item.id ,
+                value: item.id,
+                id :item.id
+              }
+            }
+          })
+        );
+        },
+        error: function( xhr, status, index, anchor ) {
+          return {
+            label: 'no se econtro resultado' ,
+            value: request.term,
+            id :-1
+          }
+        }
+      });
+    },
+    minLength: 1,
+    select: function( event, ui ) {
+      if(ui.item.id != -1)
+        showIframe("/notadedebitos/"+ui.item.id+"/edit","Editar Nota de Debito",1000,600);
+    },
+    open: function() {
+      $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+    },
+    close: function() {
+      $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+    }
+  });
+
+  var cliente_id = -1;
+  $( "#filtro_cliente" ).autocomplete({
+    source: function( request, response ) {
+      cliente_id = -1;
+      $.ajax({
+        url: "empresas.json?filtro="+request.term,
+        success: function( data ) {
+          data = data.empresas
+          if(data.length == 0){
+            data = [{
+                id :-1
+              }];
+          }
+          response( $.map( data, function( item ) {
+            if (item.id == -1){
+              return {
+                label: "no se encotraron resultados" ,
+                value: request.term,
+                id :item.id
+              }
+            }else{
+              return {
+                label: item.nombre ,
+                value: item.nombre,
+                id :item.id
+              }
+            }
+          })
+        );
+        },
+        error: function( xhr, status, index, anchor ) {
+          cliente_id = -1;
+          return {
+            label: 'no se econtro reultado' ,
+            value: request.term,
+            id :-1
+          }
+        }
+      });
+    },
+    minLength: 1,
+    select: function( event, ui ) {
+      if(ui.item.id != -1){
+        cliente_id = ui.item.id;
+      }
+      //showIframe("/empresas/"+ui.item.id+"/edit","Editar Empresa",960,600);
+    },
+    open: function() {
+      $( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+    },
+    close: function() {
+      $( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+    }
+  });
+</script>
+<br />
+<a class="nuevo" href ="#" data="/notadedebitos/new" dataw="690"  datah="500px" style="position:relative; width:200px" title="Agregar nueva Nota de Débito">Agregar nueva Nota de D&eacute;bito</a>
+<div id="buscar_notadedebito" style="left: 240px; position: relative; top: -29px; width: 600px; height: 35px; margin-bottom: -48px;">
+  <label for="filtro_notadedebito">Número: </label>
+  <input id="filtro_notadedebito" style="width:11em;" class="filtro" />
+  <span id="more-filters" >B&uacute;squeda</span>
+
+  <div id ="filter-options" style="position: relative;left: -240px;top:5px ;border-style:solid;border-width:0.2px; border-color: #FFFFFF; width: 900px; height: 100px; padding: 10px 0 0 10px;">
+      <span class="rango-fecha">
+      <label for="from">Desde</label>
+      <input type="text" id="from" name="from"/>
+      <label for="to">Hasta</label>
+      <input type="text" id="to" name="to"/>
+    </span>
+    <div style ="width:220px;padding: 15px;float: left;">
+      <label for="filtro_cliente">Cliente: </label>
+      <input id="filtro_cliente" style="width:11em;" class="filtro" />
+    </div>
+    <div  style ="width:60px;float: right;padding: 10px; padding-right: 40px">
+      <span id="send-query" >Filtrar</span>
+    </div>
+  </div>
+</div>
+
+
+<br /><br />
+<div id="listado">
+  <%  else %>
+    <script type="text/javascript">
+      limpiar_paginado();
+    </script>
+<% end %>
+  <table>
+    <tr>
+      <th class ="ui-state-active" width ="120">ID</th>
+      <th class ="ui-state-active" width ="270">Cliente</th>
+      <th class ="ui-state-active" width ="200">Estado</th>
+      <th class ="ui-state-active" width ="200">Total</th>
+      <th class ="ui-state-active" width ="200">Saldo</th>
+      <th class ="ui-state-active" width ="120">Moneda</th>
+      <th class ="ui-state-active" width ="200">Fecha</th>
+      <th class ="ui-state-active"></th>
+      <th class ="ui-state-active"></th>
+    </tr>
+
+    <% @notadedebitos.each do |notadedebito| %>
+      <tr>
+        <td  class="ui-state-default ui-corner-all"><%= notadedebito.id %></td>
+        <td  class="ui-state-default ui-corner-all"><%=  (notadedebito.comerciante)?notadedebito.comerciante.nombre: notadedebito.comerciante_id %></td>
+        <td  class="ui-state-default ui-corner-all"><%= (notadedebito.impresa)?"Impresa":(notadedebito.anulada)?"Anulada":"S/Imprimir" %></td>
+        <td  class="ui-state-default ui-corner-all"><%=  "%.2f"  %(notadedebito.total_sinimpuestos + notadedebito.total_impuestos) %></td>
+        <td  class="ui-state-default ui-corner-all"><%=  "%.2f"  %(notadedebito.adeudo) %></td>
+        <td class="ui-state-default ui-corner-all"><%=  (notadedebito.moneda)?notadedebito.moneda.nombre: notadedebito.moneda_id %></td>
+        <td  class="ui-state-default ui-corner-all"><%= notadedebito.fecha %></td>
+        <td  class="ui-state-default ui-corner-all"><a href ="#" data="<%=edit_notadedebito_path(notadedebito) %>" dataw="600"  datah="1000px" class="list_link" title="Editar Nota de Debito"><span class="ui-icon ui-icon-wrench"></span></a>
+        <td  class="ui-state-default ui-corner-all"><a href="#" action="/notadedebitos/<%=  notadedebito.id %>" class="delete_list" data-method="delete" title="Eliminar Nota de Debito"><span class="ui-icon ui-icon-trash"></span></a></td>
+
+      </tr>
+    <% end %>
+  </table>
+<%=  will_paginate @impuestos, :param_name => :numero_hoja , :class => :flickr_pagination %>
+<% if params[:numero_hoja].nil? %>
+    </div>
+<% end %>
+

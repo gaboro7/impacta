@@ -1,0 +1,81 @@
+<script>
+  $(function() {
+    $( "#tabs-inner" ).tabs();
+
+
+    $(".edit_sub_link").click(function(){
+      showIframe($(this).attr("data"),"editar Articulo" ,$(this).attr("datah"),$(this).attr("dataw"))
+    
+
+    });
+    $(".delete_sub_list").click(function(){
+
+      var url = $(this).attr("action");
+    
+      $('#delete_sub_dialog').html($(this).attr("title"));
+      $('#delete_sub_dialog').dialog({
+        resizable: false,
+        height:160,
+        modal: true,
+        buttons: {
+          "Borrar": function() {
+            var data = new Object();
+            var this_false = $( this );
+            data["_method"] = "delete";
+            $.ajax({
+              type: "POST",
+              url: url,
+              data: data,
+              context: document.body,
+              success: function(html_data){
+                this_false.dialog( "close" );
+                $("#dialog").dialog( "close" );
+                reloadIframe("/listaprecios/<%=@listaprecio.id%>/edit");
+
+              }
+            });
+          },
+          "Cancelar": function() {
+            $( this ).dialog( "close" );
+          }
+        }
+      });
+    });
+  });
+</script>
+<%= render 'form' %>
+
+
+<div id="delete_sub_dialog"></div>
+
+<div id="edit_sub_dialog"></div>
+
+<div id="tabs-inner"  style="left: 500px;    position: absolute;    top: 10px;    width: 450px;">
+  <ul>
+    <li><a href="#tabs-1">Precio Articulo</a></li>
+  </ul>
+  <div id="tabs-1" style="width:auto;height: 530px; overflow: auto">
+
+    <table>
+      <tr>
+        <th class ="ui-state-active" width ="200">N&uacute;mero Art&iacute;culo</th>
+        <th class ="ui-state-active" width ="200">Nombre Art&iacute;culo</th>
+        <th class ="ui-state-active" width ="200">Precio</th>
+        <th class ="ui-state-active" width ="200">Descuento</th>
+
+        <th class ="ui-state-active"></th>
+        <th class ="ui-state-active"></th>
+      </tr>
+
+      <%= render @listaprecio.precioarts %>
+
+
+    </table>
+
+<br />
+    
+  </div>
+  
+</div>
+<%= render 'precioarts/form' %>
+
