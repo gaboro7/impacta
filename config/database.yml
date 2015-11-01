@@ -36,6 +36,6 @@ production:
   encoding: utf8
   database: prodfactpand
   pool: 5
-  username: admin
-  password: impacta2011
+  username: adminkIU6fxu
+  password: L5St3md34leN
   socket: /var/run/mysqld/mysqld.sock
