@@ -8,8 +8,8 @@ development:
   encoding: utf8
   database: devfactpand
   pool: 5
-  username: admin
-  password: impacta2011
+  username: b27505bfe6b210
+  password: b1b6c5b2
   socket: /var/run/mysqld/mysqld.sock
 
 #  adapter: sqlite3
@@ -27,15 +27,15 @@ test:
   encoding: utf8
   database: testfactpand
   pool: 5
-  username: admin
-  password: impacta2011
+  username: b27505bfe6b210
+  password: b1b6c5b2
   socket: /var/run/mysqld/mysqld.sock
 
 production:
   adapter: mysql2
   encoding: utf8
   database: prodfactpand
-  pool: 5
-  username: adminkIU6fxu
-  password: L5St3md34leN
-  socket: /var/run/mysqld/mysqld.sock
+  host: 'mysql2://b27505bfe6b210:b1b6c5b2@us-cdbr-east.cleardb.com/heroku_db?reconnect=true'
+
+
+

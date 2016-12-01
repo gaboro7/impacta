@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120403022328) do
+ActiveRecord::Schema.define(:version => 20130316213029) do
 
   create_table "articulos", :force => true do |t|
     t.string   "type",        :null => false
@@ -52,7 +52,7 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
     t.float    "precargo"
     t.string   "urecargo"
     t.integer  "cantrecargo"
-    t.integer  "pdescuento",     :default => 0
+    t.float    "pdescuento",     :default => 0.0
     t.boolean  "habilitado",     :default => true
     t.integer  "listaprecio_id"
     t.integer  "tipocliente_id"
@@ -81,6 +81,16 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
 
   add_index "clientes_formadepagos", ["cliente_id"], :name => "index_clientes_formadepagos_on_cliente_id"
   add_index "clientes_formadepagos", ["formadepago_id"], :name => "index_clientes_formadepagos_on_formadepago_id"
+
+  create_table "clientes_promocions", :force => true do |t|
+    t.integer  "cliente_id",   :null => false
+    t.integer  "promocion_id", :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "clientes_promocions", ["cliente_id"], :name => "index_clientes_promocions_on_cliente_id"
+  add_index "clientes_promocions", ["promocion_id"], :name => "index_clientes_promocions_on_promocion_id"
 
   create_table "comercializables_impuestos", :id => false, :force => true do |t|
     t.integer  "comercializable_id"
@@ -116,6 +126,17 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
 
   add_index "contactos", ["contactable_id"], :name => "index_contactos_on_contactable_id"
 
+  create_table "descuento_clientes", :force => true do |t|
+    t.integer  "cliente_id",         :null => false
+    t.integer  "comercializable_id", :null => false
+    t.float    "descuento",          :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "descuento_clientes", ["cliente_id"], :name => "index_descuento_clientes_on_cliente_id"
+  add_index "descuento_clientes", ["comercializable_id"], :name => "index_descuento_clientes_on_comercializable_id"
+
   create_table "domicilios", :force => true do |t|
     t.string   "domicilio"
     t.integer  "persona_id"
@@ -140,6 +161,7 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
     t.boolean  "impresa",           :default => false
     t.boolean  "anulada",           :default => false
     t.float    "adeudo",            :default => 0.0
+    t.string   "numero"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -148,7 +170,9 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
   add_index "facturas", ["comerciante_id", "comerciante_type"], :name => "index_facturas_on_comerciante_id_and_comerciante_type"
   add_index "facturas", ["fecha"], :name => "index_facturas_on_fecha"
   add_index "facturas", ["formadepago_id"], :name => "index_facturas_on_formadepago_id"
+  add_index "facturas", ["id", "contado"], :name => "index_facturas_on_id_and_contado"
   add_index "facturas", ["moneda_id"], :name => "facturas_moneda_id_fk"
+  add_index "facturas", ["numero"], :name => "index_facturas_on_numero"
   add_index "facturas", ["sucursal_id"], :name => "facturas_sucursal_id_fk"
 
   create_table "formadepagos", :force => true do |t|
@@ -222,6 +246,22 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
   end
 
   add_index "foto_impuesto_recs", ["renglon_recdetalle_id"], :name => "index_foto_impuesto_recs_on_renglon_recdetalle_id"
+
+  create_table "impresiones", :force => true do |t|
+    t.boolean  "anulada",         :default => false
+    t.integer  "cant_paginas",    :default => 1
+    t.integer  "imprimible_id",                      :null => false
+    t.string   "imprimible_type",                    :null => false
+    t.boolean  "contado"
+    t.integer  "numero",                             :null => false
+    t.string   "serie",                              :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "impresiones", ["imprimible_id", "imprimible_type", "contado"], :name => "impresiones_indice_contado"
+  add_index "impresiones", ["imprimible_id", "imprimible_type", "numero", "serie"], :name => "impresiones_indice"
+  add_index "impresiones", ["imprimible_id", "imprimible_type"], :name => "index_impresiones_on_imprimible_id_and_imprimible_type"
 
   create_table "impresiones_facts", :force => true do |t|
     t.integer  "numero",                          :null => false
@@ -352,8 +392,8 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
 
   create_table "mail_internos", :force => true do |t|
     t.string   "mail"
-    t.integer  "conmail_id"
-    t.string   "conmail_type"
+    t.integer  "conmail_id",   :null => false
+    t.string   "conmail_type", :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -367,10 +407,11 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
   end
 
   create_table "movimiento_clientes", :force => true do |t|
-    t.integer  "documento_id",   :null => false
-    t.string   "documento_type", :null => false
+    t.integer  "documento_id"
+    t.string   "documento_type"
     t.integer  "cliente_id",     :null => false
     t.integer  "sucursal_id"
+    t.string   "operacion",      :null => false
     t.date     "fecha",          :null => false
     t.float    "debe",           :null => false
     t.float    "haber",          :null => false
@@ -386,9 +427,11 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
   add_index "movimiento_clientes", ["cliente_id", "fecha", "moneda_id"], :name => "index_movimientos_clientes_reportes1"
   add_index "movimiento_clientes", ["cliente_id", "sucursal_id", "fecha", "moneda_id"], :name => "index_movimientos_clientes_reportes1_con_sucursal"
   add_index "movimiento_clientes", ["cliente_id"], :name => "index_movimiento_clientes_on_cliente_id"
+  add_index "movimiento_clientes", ["documento_id", "documento_type"], :name => "index_movimiento_clientes_on_documento_id_and_documento_type"
 
   create_table "notadecreditos", :force => true do |t|
     t.boolean  "anulada",           :default => false
+    t.boolean  "es_devolucion",     :default => false
     t.string   "rut",                                  :null => false
     t.string   "direccion_cliente",                    :null => false
     t.string   "codigo_barras"
@@ -401,12 +444,15 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
     t.float    "tipo_de_cambio"
     t.boolean  "impresa",           :default => false
     t.integer  "sucursal_id"
+    t.string   "numero"
+    t.float    "adeudo"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
   add_index "notadecreditos", ["comerciante_id", "comerciante_type"], :name => "index_notadecreditos_on_comerciante_id_and_comerciante_type"
   add_index "notadecreditos", ["fecha"], :name => "index_notadecreditos_on_fecha"
+  add_index "notadecreditos", ["numero"], :name => "index_notadecreditos_on_numero"
   add_index "notadecreditos", ["sucursal_id"], :name => "index_notadecreditos_on_sucursal_id"
 
   create_table "notadedebitos", :force => true do |t|
@@ -423,12 +469,15 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
     t.float    "tipo_de_cambio"
     t.boolean  "impresa",           :default => false
     t.integer  "sucursal_id"
+    t.float    "adeudo"
+    t.string   "numero"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
   add_index "notadedebitos", ["comerciante_id", "comerciante_type"], :name => "index_notadedebitos_on_comerciante_id_and_comerciante_type"
   add_index "notadedebitos", ["fecha"], :name => "index_notadedebitos_on_fecha"
+  add_index "notadedebitos", ["numero"], :name => "index_notadedebitos_on_numero"
   add_index "notadedebitos", ["sucursal_id"], :name => "index_notadedebitos_on_sucursal_id"
 
   create_table "precioarts", :force => true do |t|
@@ -449,8 +498,10 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
     t.float    "descuento",   :default => 0.0
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.string   "descripcion"
   end
 
+  add_index "promocions", ["descripcion"], :name => "index_promocions_on_descripcion"
   add_index "promocions", ["fechafin"], :name => "index_promocions_on_fechafin"
   add_index "promocions", ["fechainicio"], :name => "index_promocions_on_fechainicio"
 
@@ -469,6 +520,8 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
     t.float    "tipo_de_cambio"
     t.boolean  "impresa",           :default => false
     t.boolean  "anulada",           :default => false
+    t.string   "numero"
+    t.boolean  "manual"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -476,6 +529,7 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
   add_index "recibos", ["comerciante_id", "comerciante_type"], :name => "index_recibos_on_comerciante_id_and_comerciante_type"
   add_index "recibos", ["fecha"], :name => "index_recibos_on_fecha"
   add_index "recibos", ["moneda_id"], :name => "recibos_moneda_id_fk"
+  add_index "recibos", ["numero"], :name => "index_recibos_on_numero"
   add_index "recibos", ["pagocontado_id"], :name => "recibos_pagocontado_id_fk"
   add_index "recibos", ["sucursal_id"], :name => "recibos_sucursal_id_fk"
 
@@ -495,7 +549,7 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
     t.float    "total_renglon",                       :null => false
     t.float    "total_impuestos",                     :null => false
     t.integer  "comercializable_id",                  :null => false
-    t.integer  "cantidad",                            :null => false
+    t.float    "cantidad",                            :null => false
     t.float    "precio_unitario",                     :null => false
     t.float    "descuento",          :default => 0.0
     t.string   "comentario"
@@ -506,15 +560,33 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
   add_index "renglon_facturas", ["comercializable_id"], :name => "index_renglon_facturas_on_comercializable_id"
   add_index "renglon_facturas", ["factura_id"], :name => "index_renglon_facturas_on_factura_id"
 
+  create_table "renglon_ndc_articulos", :force => true do |t|
+    t.integer  "comercializable_id",                  :null => false
+    t.integer  "notadecredito_id",                    :null => false
+    t.float    "cantidad",                            :null => false
+    t.float    "precio_unitario",                     :null => false
+    t.float    "total_renglon",                       :null => false
+    t.float    "total_impuestos",                     :null => false
+    t.float    "descuento",          :default => 0.0
+    t.string   "comentario"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "renglon_ndc_articulos", ["comercializable_id"], :name => "index_renglon_ndc_articulos_on_comercializable_id"
+  add_index "renglon_ndc_articulos", ["notadecredito_id"], :name => "index_renglon_ndc_articulos_on_notadecredito_id"
+
   create_table "renglon_ndcdetalles", :force => true do |t|
     t.string   "detalle",          :null => false
     t.integer  "notadecredito_id", :null => false
     t.float    "total_impuestos",  :null => false
     t.float    "total_renglon",    :null => false
+    t.integer  "factura_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
+  add_index "renglon_ndcdetalles", ["factura_id"], :name => "index_renglon_ndcdetalles_on_factura_id"
   add_index "renglon_ndcdetalles", ["notadecredito_id"], :name => "index_renglon_ndcdetalles_on_notadecredito_id"
 
   create_table "renglon_ndcndds", :force => true do |t|
@@ -530,15 +602,33 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
   add_index "renglon_ndcndds", ["notadecredito_id"], :name => "index_renglon_ndcndds_on_notadecredito_id"
   add_index "renglon_ndcndds", ["notadedebito_id"], :name => "index_renglon_ndcndds_on_notadedebito_id"
 
+  create_table "renglon_ndd_articulos", :force => true do |t|
+    t.integer  "notadedebito_id",                     :null => false
+    t.integer  "comercializable_id",                  :null => false
+    t.float    "cantidad",                            :null => false
+    t.float    "precio_unitario",                     :null => false
+    t.float    "total_renglon",                       :null => false
+    t.float    "total_impuestos",                     :null => false
+    t.float    "descuento",          :default => 0.0
+    t.string   "comentario"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "renglon_ndd_articulos", ["comercializable_id"], :name => "index_renglon_ndd_articulos_on_comercializable_id"
+  add_index "renglon_ndd_articulos", ["notadedebito_id"], :name => "index_renglon_ndd_articulos_on_notadedebito_id"
+
   create_table "renglon_ndddetalles", :force => true do |t|
     t.string   "detalle",         :null => false
     t.integer  "notadedebito_id", :null => false
     t.float    "total_impuestos", :null => false
     t.float    "total_renglon",   :null => false
+    t.integer  "factura_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
+  add_index "renglon_ndddetalles", ["factura_id"], :name => "index_renglon_ndddetalles_on_factura_id"
   add_index "renglon_ndddetalles", ["notadedebito_id"], :name => "index_renglon_ndddetalles_on_notadedebito_id"
 
   create_table "renglon_nddndcs", :force => true do |t|
@@ -558,7 +648,7 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
     t.integer  "notadecredito_id",                    :null => false
     t.integer  "factura_id",                          :null => false
     t.string   "comentario"
-    t.integer  "cantidad",                            :null => false
+    t.float    "cantidad",                            :null => false
     t.integer  "comercializable_id"
     t.float    "descuento",          :default => 0.0
     t.float    "precio_unitario",                     :null => false
@@ -576,7 +666,7 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
     t.integer  "notadedebito_id",                     :null => false
     t.integer  "factura_id",                          :null => false
     t.string   "comentario"
-    t.integer  "cantidad",                            :null => false
+    t.float    "cantidad",                            :null => false
     t.integer  "comercializable_id",                  :null => false
     t.float    "descuento",          :default => 0.0
     t.float    "precio_unitario",                     :null => false
@@ -591,28 +681,40 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
   add_index "renglon_notadebitos", ["notadedebito_id"], :name => "index_renglon_notadebitos_on_notadedebito_id"
 
   create_table "renglon_recdetalles", :force => true do |t|
-    t.integer  "recibo_id",       :null => false
-    t.string   "detalle",         :null => false
-    t.float    "total_impuestos", :null => false
-    t.float    "total_renglon",   :null => false
+    t.integer  "recibo_id",     :null => false
+    t.string   "detalle",       :null => false
+    t.float    "total_renglon", :null => false
     t.integer  "factura_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
-  add_index "renglon_recdetalles", ["factura_id"], :name => "renglon_recdetalles_factura_id_fk"
+  add_index "renglon_recdetalles", ["factura_id"], :name => "index_renglon_recdetalles_on_factura_id"
   add_index "renglon_recdetalles", ["recibo_id"], :name => "index_renglon_recdetalles_on_recibo_id"
 
+  create_table "renglon_recibo_docs", :force => true do |t|
+    t.integer  "recibo_id",      :null => false
+    t.integer  "documento_id",   :null => false
+    t.string   "documento_type", :null => false
+    t.float    "total_renglon",  :null => false
+    t.string   "detalle"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "renglon_recibo_docs", ["documento_id", "documento_type"], :name => "index_renglon_recibo_docs_on_documento_id_and_documento_type"
+  add_index "renglon_recibo_docs", ["recibo_id"], :name => "index_renglon_recibo_docs_on_recibo_id"
+
   create_table "renglon_recibos", :force => true do |t|
-    t.integer  "factura_id",      :null => false
-    t.integer  "recibo_id",       :null => false
-    t.float    "total_renglon",   :null => false
-    t.float    "total_impuestos", :null => false
+    t.integer  "factura_id",    :null => false
+    t.integer  "recibo_id",     :null => false
+    t.float    "total_renglon", :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
   add_index "renglon_recibos", ["factura_id"], :name => "index_renglon_recibos_on_factura_id"
+  add_index "renglon_recibos", ["recibo_id"], :name => "index_renglon_recibos_on_recibo_id"
 
   create_table "rolarticulos", :force => true do |t|
     t.string   "type",                        :null => false
@@ -625,6 +727,17 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
   end
 
   add_index "rolarticulos", ["rola_id"], :name => "index_rolarticulos_on_rola_id"
+
+  create_table "settings", :force => true do |t|
+    t.string   "var",                      :null => false
+    t.text     "value"
+    t.integer  "thing_id"
+    t.string   "thing_type", :limit => 30
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "settings", ["thing_type", "thing_id", "var"], :name => "index_settings_on_thing_type_and_thing_id_and_var", :unique => true
 
   create_table "sucursals", :force => true do |t|
     t.string   "nombre",       :null => false
@@ -641,8 +754,8 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
 
   create_table "telefonos", :force => true do |t|
     t.string   "telefono"
-    t.integer  "contelefono_id"
-    t.string   "contelefono_type"
+    t.integer  "contelefono_id",   :null => false
+    t.string   "contelefono_type", :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -666,88 +779,110 @@ ActiveRecord::Schema.define(:version => 20120403022328) do
   add_index "users", ["email"], :name => "index_users_on_email", :unique => true
   add_index "users", ["nombre"], :name => "index_users_on_nombre", :unique => true
 
-  add_foreign_key "articulos_articulocomps", "articulos", :name => "articulos_articulocomps_articulo_id_fk"
+  add_foreign_key "articulos_articulocomps", "articulos", name: "articulos_articulocomps_articulo_id_fk"
 
-  add_foreign_key "articulos_rolarticulos", "articulos", :name => "articulos_rolarticulos_articulo_id_fk", :dependent => :delete
-  add_foreign_key "articulos_rolarticulos", "rolarticulos", :name => "articulos_rolarticulos_rolarticulo_id_fk", :dependent => :delete
+  add_foreign_key "articulos_rolarticulos", "articulos", name: "articulos_rolarticulos_articulo_id_fk", dependent: :delete
+  add_foreign_key "articulos_rolarticulos", "rolarticulos", name: "articulos_rolarticulos_rolarticulo_id_fk", dependent: :delete
 
-  add_foreign_key "clientes", "listaprecios", :name => "clientes_listaprecio_id_fk"
-  add_foreign_key "clientes", "tipoclientes", :name => "clientes_tipocliente_id_fk"
+  add_foreign_key "clientes", "listaprecios", name: "clientes_listaprecio_id_fk"
+  add_foreign_key "clientes", "tipoclientes", name: "clientes_tipocliente_id_fk"
 
-  add_foreign_key "clientes_formadepagos", "clientes", :name => "clientes_formadepagos_cliente_id_fk", :dependent => :delete
-  add_foreign_key "clientes_formadepagos", "formadepagos", :name => "clientes_formadepagos_formadepago_id_fk"
+  add_foreign_key "clientes_formadepagos", "clientes", name: "clientes_formadepagos_cliente_id_fk", dependent: :delete
+  add_foreign_key "clientes_formadepagos", "formadepagos", name: "clientes_formadepagos_formadepago_id_fk"
 
-  add_foreign_key "comercializables_impuestos", "impuestos", :name => "comercializables_impuestos_impuesto_id_fk"
-  add_foreign_key "comercializables_impuestos", "rolarticulos", :name => "comercializables_impuestos_comercializable_id_fk", :column => "comercializable_id", :dependent => :delete
+  add_foreign_key "clientes_promocions", "clientes", name: "clientes_promocions_cliente_id_fk"
+  add_foreign_key "clientes_promocions", "promocions", name: "clientes_promocions_promocion_id_fk", dependent: :delete
 
-  add_foreign_key "comercializables_promocions", "promocions", :name => "comercializables_promocions_promocion_id_fk", :dependent => :delete
-  add_foreign_key "comercializables_promocions", "rolarticulos", :name => "comercializables_promocions_comercializable_id_fk", :column => "comercializable_id", :dependent => :delete
+  add_foreign_key "comercializables_impuestos", "impuestos", name: "comercializables_impuestos_impuesto_id_fk"
+  add_foreign_key "comercializables_impuestos", "rolarticulos", name: "comercializables_impuestos_comercializable_id_fk", column: "comercializable_id", dependent: :delete
 
-  add_foreign_key "facturas", "formadepagos", :name => "facturas_formadepago_id_fk"
-  add_foreign_key "facturas", "monedas", :name => "facturas_moneda_id_fk"
-  add_foreign_key "facturas", "sucursals", :name => "facturas_sucursal_id_fk"
+  add_foreign_key "comercializables_promocions", "promocions", name: "comercializables_promocions_promocion_id_fk", dependent: :delete
+  add_foreign_key "comercializables_promocions", "rolarticulos", name: "comercializables_promocions_comercializable_id_fk", column: "comercializable_id", dependent: :delete
 
-  add_foreign_key "formadepagos_monedas", "formadepagos", :name => "formadepagos_monedas_formadepago_id_fk", :dependent => :delete
-  add_foreign_key "formadepagos_monedas", "monedas", :name => "formadepagos_monedas_moneda_id_fk", :dependent => :delete
+  add_foreign_key "descuento_clientes", "clientes", name: "descuento_clientes_cliente_id_fk"
+  add_foreign_key "descuento_clientes", "rolarticulos", name: "descuento_clientes_comercializable_id_fk", column: "comercializable_id"
 
-  add_foreign_key "formadepagos_promocions", "formadepagos", :name => "formadepagos_promocions_formadepago_id_fk"
-  add_foreign_key "formadepagos_promocions", "promocions", :name => "formadepagos_promocions_promocion_id_fk", :dependent => :delete
+  add_foreign_key "facturas", "formadepagos", name: "facturas_formadepago_id_fk"
+  add_foreign_key "facturas", "monedas", name: "facturas_moneda_id_fk"
+  add_foreign_key "facturas", "sucursals", name: "facturas_sucursal_id_fk"
 
-  add_foreign_key "foto_impuesto_recs", "renglon_recdetalles", :name => "foto_impuesto_recs_renglon_recdetalle_id_fk"
+  add_foreign_key "formadepagos_monedas", "formadepagos", name: "formadepagos_monedas_formadepago_id_fk", dependent: :delete
+  add_foreign_key "formadepagos_monedas", "monedas", name: "formadepagos_monedas_moneda_id_fk", dependent: :delete
 
-  add_foreign_key "impresiones_facts", "facturas", :name => "impresiones_facts_factura_id_fk", :dependent => :delete
+  add_foreign_key "formadepagos_promocions", "formadepagos", name: "formadepagos_promocions_formadepago_id_fk"
+  add_foreign_key "formadepagos_promocions", "promocions", name: "formadepagos_promocions_promocion_id_fk", dependent: :delete
 
-  add_foreign_key "impresiones_ndcs", "notadecreditos", :name => "impresiones_ndcs_notadecredito_id_fk", :dependent => :delete
+  add_foreign_key "foto_impuesto_recs", "renglon_recdetalles", name: "foto_impuesto_recs_renglon_recdetalle_id_fk"
 
-  add_foreign_key "impresiones_ndds", "notadedebitos", :name => "impresiones_ndds_notadedebito_id_fk", :dependent => :delete
+  add_foreign_key "impresiones_facts", "facturas", name: "impresiones_facts_factura_id_fk", dependent: :delete
 
-  add_foreign_key "impresiones_recs", "recibos", :name => "impresiones_recs_recibo_id_fk", :dependent => :delete
+  add_foreign_key "impresiones_ndcs", "notadecreditos", name: "impresiones_ndcs_notadecredito_id_fk", dependent: :delete
 
-  add_foreign_key "impuestos_renglon_factdetalles", "impuestos", :name => "impuestos_renglon_factdetalles_impuesto_id_fk"
-  add_foreign_key "impuestos_renglon_factdetalles", "renglon_factdetalles", :name => "impuestos_renglon_factdetalles_renglon_factdetalle_id_fk", :dependent => :delete
+  add_foreign_key "impresiones_ndds", "notadedebitos", name: "impresiones_ndds_notadedebito_id_fk", dependent: :delete
 
-  add_foreign_key "impuestos_renglon_ndcdetalles", "impuestos", :name => "impuestos_renglon_ndcdetalles_impuesto_id_fk"
-  add_foreign_key "impuestos_renglon_ndcdetalles", "renglon_ndcdetalles", :name => "impuestos_renglon_ndcdetalles_renglon_ndcdetalle_id_fk", :dependent => :delete
+  add_foreign_key "impresiones_recs", "recibos", name: "impresiones_recs_recibo_id_fk", dependent: :delete
 
-  add_foreign_key "impuestos_renglon_ndddetalles", "impuestos", :name => "impuestos_renglon_ndddetalles_impuesto_id_fk"
-  add_foreign_key "impuestos_renglon_ndddetalles", "renglon_ndddetalles", :name => "impuestos_renglon_ndddetalles_renglon_ndddetalle_id_fk", :dependent => :delete
+  add_foreign_key "impuestos_renglon_factdetalles", "impuestos", name: "impuestos_renglon_factdetalles_impuesto_id_fk"
+  add_foreign_key "impuestos_renglon_factdetalles", "renglon_factdetalles", name: "impuestos_renglon_factdetalles_renglon_factdetalle_id_fk", dependent: :delete
 
-  add_foreign_key "impuestos_renglon_recdetalles", "impuestos", :name => "impuestos_renglon_recdetalles_impuesto_id_fk"
-  add_foreign_key "impuestos_renglon_recdetalles", "renglon_recdetalles", :name => "impuestos_renglon_recdetalles_renglon_recdetalle_id_fk"
+  add_foreign_key "impuestos_renglon_ndcdetalles", "impuestos", name: "impuestos_renglon_ndcdetalles_impuesto_id_fk"
+  add_foreign_key "impuestos_renglon_ndcdetalles", "renglon_ndcdetalles", name: "impuestos_renglon_ndcdetalles_renglon_ndcdetalle_id_fk", dependent: :delete
 
-  add_foreign_key "notadecreditos", "sucursals", :name => "notadecreditos_sucursal_id_fk"
+  add_foreign_key "impuestos_renglon_ndddetalles", "impuestos", name: "impuestos_renglon_ndddetalles_impuesto_id_fk"
+  add_foreign_key "impuestos_renglon_ndddetalles", "renglon_ndddetalles", name: "impuestos_renglon_ndddetalles_renglon_ndddetalle_id_fk", dependent: :delete
 
-  add_foreign_key "notadedebitos", "sucursals", :name => "notadedebitos_sucursal_id_fk"
+  add_foreign_key "impuestos_renglon_recdetalles", "impuestos", name: "impuestos_renglon_recdetalles_impuesto_id_fk"
+  add_foreign_key "impuestos_renglon_recdetalles", "renglon_recdetalles", name: "impuestos_renglon_recdetalles_renglon_recdetalle_id_fk", dependent: :delete
 
-  add_foreign_key "precioarts", "listaprecios", :name => "precioarts_listaprecio_id_fk", :dependent => :delete
-  add_foreign_key "precioarts", "rolarticulos", :name => "precioarts_comercializable_id_fk", :column => "comercializable_id"
+  add_foreign_key "notadecreditos", "sucursals", name: "notadecreditos_sucursal_id_fk"
 
-  add_foreign_key "recibos", "formadepagos", :name => "recibos_pagocontado_id_fk", :column => "pagocontado_id"
-  add_foreign_key "recibos", "monedas", :name => "recibos_moneda_id_fk"
-  add_foreign_key "recibos", "sucursals", :name => "recibos_sucursal_id_fk"
+  add_foreign_key "notadedebitos", "sucursals", name: "notadedebitos_sucursal_id_fk"
 
-  add_foreign_key "renglon_factdetalles", "facturas", :name => "renglon_factdetalles_factura_id_fk"
+  add_foreign_key "precioarts", "listaprecios", name: "precioarts_listaprecio_id_fk", dependent: :delete
+  add_foreign_key "precioarts", "rolarticulos", name: "precioarts_comercializable_id_fk", column: "comercializable_id"
 
-  add_foreign_key "renglon_facturas", "facturas", :name => "renglon_facturas_factura_id_fk", :dependent => :delete
-  add_foreign_key "renglon_facturas", "rolarticulos", :name => "renglon_facturas_comercializable_id_fk", :column => "comercializable_id"
+  add_foreign_key "recibos", "formadepagos", name: "recibos_pagocontado_id_fk", column: "pagocontado_id"
+  add_foreign_key "recibos", "monedas", name: "recibos_moneda_id_fk"
+  add_foreign_key "recibos", "sucursals", name: "recibos_sucursal_id_fk"
 
-  add_foreign_key "renglon_ndcdetalles", "notadecreditos", :name => "renglon_ndcdetalles_notadecredito_id_fk"
+  add_foreign_key "renglon_factdetalles", "facturas", name: "renglon_factdetalles_factura_id_fk"
 
-  add_foreign_key "renglon_ndddetalles", "notadedebitos", :name => "renglon_ndddetalles_notadedebito_id_fk"
+  add_foreign_key "renglon_facturas", "facturas", name: "renglon_facturas_factura_id_fk", dependent: :delete
+  add_foreign_key "renglon_facturas", "rolarticulos", name: "renglon_facturas_comercializable_id_fk", column: "comercializable_id"
 
-  add_foreign_key "renglon_notacreditos", "facturas", :name => "renglon_notacreditos_factura_id_fk"
-  add_foreign_key "renglon_notacreditos", "notadecreditos", :name => "renglon_notacreditos_notadecredito_id_fk", :dependent => :delete
-  add_foreign_key "renglon_notacreditos", "rolarticulos", :name => "renglon_notacreditos_comercializable_id_fk", :column => "comercializable_id"
+  add_foreign_key "renglon_ndc_articulos", "notadecreditos", name: "renglon_ndc_articulos_notadecredito_id_fk", dependent: :delete
+  add_foreign_key "renglon_ndc_articulos", "rolarticulos", name: "renglon_ndc_articulos_comercializable_id_fk", column: "comercializable_id"
 
-  add_foreign_key "renglon_notadebitos", "facturas", :name => "renglon_notadebitos_factura_id_fk"
-  add_foreign_key "renglon_notadebitos", "notadedebitos", :name => "renglon_notadebitos_notadedebito_id_fk", :dependent => :delete
-  add_foreign_key "renglon_notadebitos", "rolarticulos", :name => "renglon_notadebitos_comercializable_id_fk", :column => "comercializable_id"
+  add_foreign_key "renglon_ndcdetalles", "facturas", name: "renglon_ndcdetalles_factura_id_fk"
+  add_foreign_key "renglon_ndcdetalles", "notadecreditos", name: "renglon_ndcdetalles_notadecredito_id_fk", dependent: :delete
 
-  add_foreign_key "renglon_recdetalles", "facturas", :name => "renglon_recdetalles_factura_id_fk"
-  add_foreign_key "renglon_recdetalles", "recibos", :name => "renglon_recdetalles_recibo_id_fk"
+  add_foreign_key "renglon_ndcndds", "notadecreditos", name: "renglon_ndcndds_notadecredito_id_fk", dependent: :delete
+  add_foreign_key "renglon_ndcndds", "notadedebitos", name: "renglon_ndcndds_notadedebito_id_fk"
 
-  add_foreign_key "renglon_recibos", "facturas", :name => "renglon_recibos_factura_id_fk"
+  add_foreign_key "renglon_ndd_articulos", "notadedebitos", name: "renglon_ndd_articulos_notadedebito_id_fk", dependent: :delete
+  add_foreign_key "renglon_ndd_articulos", "rolarticulos", name: "renglon_ndd_articulos_comercializable_id_fk", column: "comercializable_id"
 
-  add_foreign_key "sucursals", "clientes", :name => "sucursals_empresa_id_fk", :column => "empresa_id", :dependent => :delete
+  add_foreign_key "renglon_ndddetalles", "facturas", name: "renglon_ndddetalles_factura_id_fk"
+  add_foreign_key "renglon_ndddetalles", "notadedebitos", name: "renglon_ndddetalles_notadedebito_id_fk", dependent: :delete
+
+  add_foreign_key "renglon_nddndcs", "notadecreditos", name: "renglon_nddndcs_notadecredito_id_fk"
+  add_foreign_key "renglon_nddndcs", "notadedebitos", name: "renglon_nddndcs_notadedebito_id_fk", dependent: :delete
+
+  add_foreign_key "renglon_notacreditos", "facturas", name: "renglon_notacreditos_factura_id_fk"
+  add_foreign_key "renglon_notacreditos", "notadecreditos", name: "renglon_notacreditos_notadecredito_id_fk", dependent: :delete
+  add_foreign_key "renglon_notacreditos", "rolarticulos", name: "renglon_notacreditos_comercializable_id_fk", column: "comercializable_id"
+
+  add_foreign_key "renglon_notadebitos", "facturas", name: "renglon_notadebitos_factura_id_fk"
+  add_foreign_key "renglon_notadebitos", "notadedebitos", name: "renglon_notadebitos_notadedebito_id_fk", dependent: :delete
+  add_foreign_key "renglon_notadebitos", "rolarticulos", name: "renglon_notadebitos_comercializable_id_fk", column: "comercializable_id"
+
+  add_foreign_key "renglon_recdetalles", "facturas", name: "renglon_recdetalles_factura_id_fk"
+  add_foreign_key "renglon_recdetalles", "recibos", name: "renglon_recdetalles_recibo_id_fk"
+
+  add_foreign_key "renglon_recibo_docs", "recibos", name: "renglon_recibo_docs_recibo_id_fk", dependent: :delete
+
+  add_foreign_key "renglon_recibos", "facturas", name: "renglon_recibos_factura_id_fk"
+
+  add_foreign_key "sucursals", "clientes", name: "sucursals_empresa_id_fk", column: "empresa_id", dependent: :delete
 
 end

@@ -1,11 +1,11 @@
 source 'http://rubygems.org'
-ruby "1.9.2"
+ruby "1.9.3"
 gem 'rails', '3.1.1'
 
 # Bundle edge Rails instead:
 # gem 'rails',     :git => 'git://github.com/rails/rails.git'
 
-gem 'mysql2'
+gem 'mysql2', "~> 0.3.11"
 gem 'rake'
 #gem 'minitest'
 gem 'passenger'
@@ -62,4 +62,4 @@ gem 'jquery-rails'
 # To use debugger
 # gem 'ruby-debug19', :require => 'ruby-debug'
 
-  
+
